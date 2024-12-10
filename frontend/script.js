@@ -1,5 +1,5 @@
 // const url = "http://127.0.0.1:5000"
-const url = "http://ofabian.pythonanywhere.com"
+const url = "https://ofabian.pythonanywhere.com"
 const key = authenticate()
 
 const inp_price = document.getElementById('inp_price');
