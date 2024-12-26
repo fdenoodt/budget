@@ -1,5 +1,5 @@
-// const url = "http://127.0.0.1:5000"
-const url = "https://ofabian.pythonanywhere.com"
+const url = "http://127.0.0.1:5000"
+// const url = "https://ofabian.pythonanywhere.com"
 const key = authenticate()
 
 const inp_price = document.getElementById('inp_price');
@@ -176,7 +176,13 @@ const _printMonthlySavedValues = (realValues, targetValues) => {
 
     // Update the HTML elements
     document.querySelector('#real_avg').textContent = realAvg.toFixed(0)
-    document.querySelector('#target_avg').textContent = targetAvg.toFixed(0)
+
+    document.querySelector('#lbl_difference_with_target').textContent = Math.abs(realAvg - targetAvg).toFixed(0)
+    document.querySelector('#lbl_difference_with_target_ABOVE_OR_UNDER').textContent = realAvg > targetAvg ? 'above' : 'under'
+    // colour the text
+    document.querySelector('#lbl_difference_with_target').style.color = realAvg > targetAvg ? '#4BC0C0' : '#FF6384'
+
+    // document.querySelector('#lbl_savings_avg_percent').textContent = ((realAvg / targetAvg) * 100).toFixed(0)
     document.querySelector('#real_total').textContent = `${_formatNumber(realTotal)}k`;
 }
 
@@ -421,18 +427,15 @@ const updateBar = (groupedExenses, indivualExpenses) => {
     new Chart(ctx, config);
 }
 
-const updateMonthlyBudgetStatistics = (income, cap, rent, longterm, invest) => {
-    // 💲<span id="lbl_income">##</span> =  🍞<span id="lbl_cap"></span> + 🏠<span id="lbl_rent">##</span> + ✈️<span id="lbl_longterm_savings">##</span> + 💸<span id="lbl_invest"></span>
+const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
     const lbl_income = document.getElementById('lbl_income');
     const lbl_cap = document.getElementById('lbl_cap');
     const lbl_rent = document.getElementById('lbl_rent');
-    const lbl_longterm_savings = document.getElementById('lbl_longterm_savings');
     const lbl_invest = document.getElementById('lbl_invest');
 
     lbl_income.innerHTML = income.toFixed(0);
     lbl_cap.innerHTML = cap.toFixed(0);
     lbl_rent.innerHTML = rent.toFixed(0);
-    lbl_longterm_savings.innerHTML = longterm.toFixed(0);
     lbl_invest.innerHTML = invest.toFixed(0);
 
 }
@@ -453,15 +456,14 @@ const updateDonut = (groupedExenses) => {
 
     // eg: 2500 salary,
     const rent = 455
-    const cap = 850
-    // const longterm = 300
-    // const invest = income - rent - cap - longterm;
-    const invest = 1000
-    const longterm = income - rent - cap - invest;
+    const cap = 1_000 // Monthly budget/allowance
+
+    // To be invested in longterm savings
+    const invest = income - rent - cap;
 
     // eg 2600 - 455 - 850 - 300 = 1000
     const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
-    updateMonthlyBudgetStatistics(income, cap, rent, longterm, invest);
+    updateMonthlyBudgetStatistics(income, cap, rent, invest);
 
 
     const statistics = {

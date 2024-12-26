@@ -214,8 +214,9 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
     # Last record is the current month
 
     RENT_COST = 455
-    INVEST_COST = 1_000
-    MONTHLY_ALLOWANCE = 850
+    # INVEST_COST = 1_000
+    # MONTHLY_ALLOWANCE = 950
+    MONTHLY_ALLOWANCE = 1_000
 
     sum_expenses: List[SavingsPair] = []
     nb_months_ago = 0
@@ -231,7 +232,7 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
 
         sum_expense = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses])
         sum_expense += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses_periodic])
-        sum_expense += (RENT_COST + INVEST_COST)
+        sum_expense += RENT_COST
         savings = sum_expense * -1  # st it's positive if it's a saving, negative if there's debt that month
 
         # target = total income - 850 + rent_cost - invest_cost
@@ -239,9 +240,9 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
         neg_expenses: List[Expense] = [exp for exp in expenses
                                        if exp.price_elisa + exp.price_fabian < 0]  # = all incomes
         total_income = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in neg_expenses]) * -1
-        target = total_income - MONTHLY_ALLOWANCE - RENT_COST - INVEST_COST
+        INVESTMENT_REMAINDER = total_income - MONTHLY_ALLOWANCE - RENT_COST
 
-        sum_expenses.append(SavingsPair(savings, target))
+        sum_expenses.append(SavingsPair(savings, INVESTMENT_REMAINDER))
         nb_months_ago -= 1
 
     # reverse the list so that the last record is the current month
