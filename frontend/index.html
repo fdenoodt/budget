@@ -18,7 +18,7 @@
 
 
     <link rel="icon" type="image/png" href="fav.png"/>
-    <link rel="stylesheet" href="style.css?version=45">
+    <link rel="stylesheet" href="style.css?version=46">
 
 </head>
 
@@ -103,16 +103,28 @@
                 <div class="swiper-slide">
                     Total Saved versus Target
                     <div id="savings_per_month">
+                        <!-- Graph-->
                         <canvas id="savingsChart"></canvas>
                     </div>
                     <div style="font-size: 0.8em;">
                         On average, you saved <span id="real_avg" style="color: #4BC0C0;">##</span> per month (<span
                             id="lbl_difference_with_target">##</span> <span
                             id="lbl_difference_with_target_ABOVE_OR_UNDER">##</span> target).
-<!--                        That is <span id="lbl_savings_avg_percent">##</span>% of your income.-->
+                        <!--                        That is <span id="lbl_savings_avg_percent">##</span>% of your income.-->
                         <br>
-                        Total saved: <span id="real_total"
-                                     style="color: #4BC0C0;">##k</span>.
+                        Total yearly saved: <span id="real_total"
+                                                  style="color: #4BC0C0;">##k</span>.
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    Total earned
+                    <div id="earnings_per_month">
+                        <!-- Graph-->
+                        <canvas id="earningsChart"></canvas>
+                    </div>
+                    <div style="font-size: 0.8em;">
+                        On average, you earned <span id="earnings_avg" style="color: #4BC0C0;">##</span> per month.
+                        Total yearly earned: <span id="real_total_earned" style="color: #4BC0C0;">##k</span>.
                     </div>
                 </div>
             </div>
@@ -184,7 +196,7 @@
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
 
-<script src="script.js?version=45"></script>
+<script src="script.js?version=46"></script>
 
 <script>
     const categories_basics_keys = ['Boodschappen', 'Bakker', 'Gezondheid en verzorging', 'Transport', 'Auto']

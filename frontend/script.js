@@ -93,13 +93,16 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
     betterFetch(fullUrl)
         .then(response => response.json())
         .then(data => {
+            console.log(data)
             const fabian = data.fabian; // eg: +14.00
             const elisa = data.elisa; // eg: +12.00
+
             const expenses = data.expenses;
             const monthlyExpenses = data.monthly_expenses;
 
             // list of how much saved at month 0, 1, 2, 3, ... (last element is current month)
             const monthlySaved = getName() === FABIAN ? data.savings_of_lifetime_fabian : data.savings_of_lifetime_elisa;
+            const monthlyEarned = getName() === FABIAN ? data.earnings_of_lifetime_fabian : data.earnings_of_lifetime_elisa;
 
             // append monthlyExpenses to expenses
             monthlyExpenses.forEach(expense => {
@@ -146,7 +149,7 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
             updateDonut(groupedExenses);
             updateBar(groupedExenses, expenses);
 
-            printMonthlySaved(monthlySaved);
+            printMonthlySaved(monthlySaved, monthlyEarned)
 
             ALL_EXPENSES = expenses;
         })
@@ -186,78 +189,46 @@ const _printMonthlySavedValues = (realValues, targetValues) => {
     document.querySelector('#real_total').textContent = `${_formatNumber(realTotal)}k`;
 }
 
-const printMonthlySaved = (monthlySaved) => {
+const drawChart = (chartId, valueData, targetData, labels) => {
     // Get the canvas context
-    const ctx = document.getElementById('savingsChart').getContext('2d');
-
-    // Prepare the labels (last 12 months or less)
-    const labels = [];
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const currentMonth = new Date().getMonth();
-    for (let i = Math.max(0, monthlySaved.length - 12); i < monthlySaved.length; i++) {
-        labels.push(monthNames[(currentMonth - monthlySaved.length + i + 1 + 12) % 12]);
-    }
-
-    // Prepare the data (last 12 months or less)
-    const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
-    // const targetData = new Array(data.length).fill(0);
-    // const valueData = new Array(data.length).fill(0);
-
-    // hard cap of 1,000
-    // for (let i = 0; i < data.length; i++) {
-    //     valueData[i] = Math.min(data[i].value, 800);
-    //     targetData[i] = Math.min(data[i].target, 800);
-    // }
-
-    const valueData = data.map(d => d.value);
-    const targetData = data.map(d => d.target);
-
-    _printMonthlySavedValues(valueData, targetData);
+    const ctx = document.getElementById(chartId).getContext('2d');
 
     // Create the chart
     const visibleMax = Math.round(
         // 10% more than the highest value, but rounded to 100
         (valueData.reduce((a, b) => Math.max(a, b), 0) * 1.1) / 100) * 100;
 
-    // // 75th percentile
-    // // Calculate the 75th percentile
-    // const sortedData = valueData.slice().sort((a, b) => a - b);
-    // const percentileIndex = Math.floor(0.9 * sortedData.length);
-    // const percentileValue = sortedData[percentileIndex];
-    //
-    // // Set the visible max to the 75th percentile value, rounded to the nearest 100
-    // const visibleMax = Math.round(percentileValue / 100) * 100;
-
-
     new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels, datasets:
-                    [{
-                        label: 'Savings',
-                        data: valueData,
-                        fill: false,
-                        borderColor: 'rgb(75, 192, 192)',
-                        tension: 0.3,
-                        pointRadius: 5, // make the clickable point also bigger
-                        pointHoverRadius: 15,
-                    }, {
-                        label: 'Target',
-                        data: targetData,
-                        fill: false,
-                        borderColor: 'rgb(255, 99, 132)',
-                        tension: 0.3,
-                        pointRadius: 5,
-                        pointHoverRadius: 15,
-                        borderDash: [5, 5], // This will make the line dashed
-                    }]
-            }
-            ,
+                    [
+                        {
+                            label: 'Savings',
+                            data: valueData,
+                            fill: false,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.3,
+                            pointRadius: 5, // make the clickable point also bigger
+                            pointHoverRadius: 15,
+                        },
+                        {
+                            label: 'Target',
+                            data: targetData,
+                            fill: false,
+                            borderColor: 'rgb(255, 99, 132)',
+                            tension: 0.3,
+                            pointRadius: 5,
+                            pointHoverRadius: 15,
+                            borderDash: [5, 5], // This will make the line dashed
+                        }
+                    ]
+            },
             options: {
                 responsive: true, scales:
                     {
                         y: {
-                            beginAtZero: true,
+                            // beginAtZero: true,
                             max: visibleMax, // 10% more than the highest value
                             ticks: {
                                 stepSize: 100
@@ -272,8 +243,31 @@ const printMonthlySaved = (monthlySaved) => {
                 }
             }
         }
-    )
-    ;
+    );
+}
+
+const printMonthlySaved = (monthlySaved, monthlyEarned) => {
+    // Prepare the labels (last 12 months or less)
+    const labels = [];
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentMonth = new Date().getMonth();
+    for (let i = Math.max(0, monthlySaved.length - 12); i < monthlySaved.length; i++) {
+        labels.push(monthNames[(currentMonth - monthlySaved.length + i + 1 + 12) % 12]);
+    }
+
+    // Prepare the data (last 12 months or less)
+    const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
+
+    const valueData = data.map(d => d.value);
+    const targetData = data.map(d => d.target);
+
+    // Draw the chart `savingChart` (line chart)
+    drawChart('savingsChart', valueData, targetData, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+
+    // Draw the chart `earningChart` (line chart)
+    drawChart('earningChart', monthlyEarned, null, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+
+    _printMonthlySavedValues(valueData, targetData);
 }
 
 const getExpenesPerMainCategory = (expenses, incomeCategory) => {
