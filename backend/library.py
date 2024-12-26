@@ -214,8 +214,6 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
     # Last record is the current month
 
     RENT_COST = 455
-    # INVEST_COST = 1_000
-    # MONTHLY_ALLOWANCE = 950
     MONTHLY_ALLOWANCE = 1_000
 
     sum_expenses: List[SavingsPair] = []
@@ -235,7 +233,6 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
         sum_expense += RENT_COST
         savings = sum_expense * -1  # st it's positive if it's a saving, negative if there's debt that month
 
-        # target = total income - 850 + rent_cost - invest_cost
         # get all negative items in sum_expenses
         neg_expenses: List[Expense] = [exp for exp in expenses
                                        if exp.price_elisa + exp.price_fabian < 0]  # = all incomes
@@ -252,3 +249,40 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
     sum_expenses = sum_expenses[1:]
 
     return sum_expenses
+
+def _get_all_earnings_for_each_month(who: str) -> List[float]:
+    # Returns a list where list[i] is the sum of all expenses of `who` for the month at `i` months ago
+    # Last record is the current month
+
+    sum_incomes_per_month: List[float] = []
+    nb_months_ago = 0
+
+    while True:
+        # Get all expenses for the month at `nb_months_ago` months ago
+        expenses: List[Expense] = get_expenses(nb_months_ago)
+        expenses_periodic: List[Expense] = get_expenses(nb_months_ago, monthly=True)
+        if len(expenses) == 0:
+            break
+
+        # filter expenses of category 'Inkomst'
+        incomes = [e for e in expenses if e.category == 'Inkomst']
+        incomes_periodic = [e for e in expenses_periodic if e.category == 'Inkomst']
+
+        sum_income = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in incomes])
+        sum_income += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in incomes_periodic])
+        sum_incomes_per_month.append(sum_income * -1) # st it's positive if it's a saving, negative if there's debt that month
+
+        # sum_expense = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses])
+        # sum_expense += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses_periodic])
+        # sum_expenses.append(sum_expense)
+        nb_months_ago -= 1
+
+    # reverse the list so that the last record is the current month, and *-1 to make it positive
+    return sum_incomes_per_month[::-1]
+
+
+
+
+
+
+
