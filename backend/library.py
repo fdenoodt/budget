@@ -265,20 +265,18 @@ def _get_all_earnings_for_each_month(who: str) -> List[float]:
             break
 
         # filter expenses of category 'Inkomst'
-        incomes = [e for e in expenses if e.category == 'Inkomst']
+        incomes: List[Expense] = [e for e in expenses if e.category == 'Inkomst']
         incomes_periodic = [e for e in expenses_periodic if e.category == 'Inkomst']
 
         sum_income = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in incomes])
         sum_income += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in incomes_periodic])
         sum_incomes_per_month.append(sum_income * -1) # st it's positive if it's a saving, negative if there's debt that month
 
-        # sum_expense = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses])
-        # sum_expense += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses_periodic])
-        # sum_expenses.append(sum_expense)
         nb_months_ago -= 1
 
-    # reverse the list so that the last record is the current month, and *-1 to make it positive
-    return sum_incomes_per_month[::-1]
+    # reverse the list so that the last record is the current month, and *-1 to make it positive, and remove first elt
+    # return sum_incomes_per_month[::-1]
+    return sum_incomes_per_month[::-1][1:]
 
 
 

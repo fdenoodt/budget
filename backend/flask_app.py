@@ -66,8 +66,8 @@ class IndexResponse:
             "monthly_grouped_expenses": [e.serialize() for e in self.monthly_grouped_expenses],
             "historic_descriptions": self.historic_descriptions,
 
-            "fabian_earnings_of_lifetime": self.fabian_earnings_of_lifetime,
-            "elisa_earnings_of_lifetime": self.elisa_earnings_of_lifetime,
+            "earnings_of_lifetime_fabian": self.fabian_earnings_of_lifetime,
+            "earnings_of_lifetime_elisa": self.elisa_earnings_of_lifetime,
 
             "savings_of_lifetime_fabian": [e.serialize() for e in self.savings_of_lifetime_fabian],  # [SavingsPair]
             "savings_of_lifetime_elisa": [e.serialize() for e in self.savings_of_lifetime_elisa]
