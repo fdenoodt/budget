@@ -93,7 +93,6 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
     betterFetch(fullUrl)
         .then(response => response.json())
         .then(data => {
-            console.log(data)
             const fabian = data.fabian; // eg: +14.00
             const elisa = data.elisa; // eg: +12.00
 
@@ -240,13 +239,6 @@ const drawChart = (chartId, valueData, targetData, labels) => {
             pointHoverRadius: 15,
             borderDash: [5, 5], // This will make the line dashed
         });
-    }
-
-    if (chartId === 'earningsChart') {
-        console.log("earningsChart")
-        console.log("valueData", valueData)
-        console.log("labels", labels)
-
     }
 
     new Chart(ctx, {
@@ -650,6 +642,19 @@ const submit = () => {
 
     const fullUrl = `${url}/add_expense?price_fabian=${price_fabian}&price_elisa=${price_elisa}&paid_by=${paidBy}&category=${category}&subcategory=${subcategory}&description=${description}`;
 
+    // Cache when holidays are added so in future the category is by default 'Reizen'
+    if (category === 'Reizen') {
+        localStorage.setItem('last_category', category);
+        // also save the country submitted in the description (if present, so first word in description)
+        const country = description.split(' ')[0];
+        if (country) {
+            localStorage.setItem('last_country', country);
+        }
+    } else { // reset last_category
+        localStorage.setItem('last_category', '');
+        localStorage.setItem('last_country', '');
+    }
+
     betterFetch(fullUrl)
         .then(response => response.json())
         .then(data => {
@@ -657,6 +662,24 @@ const submit = () => {
         })
         .catch(e => handleError(e))
 
+}
+
+
+const holidayImmediatelyFillInCategory = () => {
+    // fill in category 'Reizen' and country from last time
+    const lastCategory = localStorage.getItem('last_category');
+    const lastCountry = localStorage.getItem('last_country');
+
+    if (lastCategory) {
+        const lst_categories_basics = document.getElementById('lst_categories_infreq');
+        lst_categories_basics.value = lastCategory;
+        chooseCategory(lst_categories_basics); // set border color
+    }
+
+    if (lastCountry) {
+        const inp_description = document.getElementById('inp_description');
+        inp_description.value = lastCountry + ' ' + inp_description.value;
+    }
 }
 
 const editName = () => {
