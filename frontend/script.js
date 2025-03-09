@@ -521,13 +521,17 @@ const updateBarExpensesLastNDays = (expenses) => {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function(context) {
+                        label: function (context) {
                             const date = labels[context.dataIndex];
                             const category = context.dataset.label;
                             const expenses = groupedExpenses[date][category];
-                            console.log(expenses.map(exp => `${exp.description}: €${exp.price_fabian.toFixed(2)}`));
-                            return expenses.map(exp => `${exp.description}: €${exp.price_fabian.toFixed(2)}`);
+                            return expenses
+                                .sort((a, b) => b.price_fabian - a.price_fabian)
+                                .map(exp => `${exp.description}: €${exp.price_fabian.toFixed(2)}`);
                         }
+                    },
+                    bodyFont: {
+                        size: 10 // Set the font size of the tooltip
                     }
                 }
             },
