@@ -463,6 +463,7 @@ const updateBarExpensesLastNDays = (expenses) => {
     // }
 
     const ctx = document.getElementById('expenses_last_n_days_chart').getContext('2d');
+    ctx.canvas.height = 200; // Set the desired height
 
     // Group expenses by date and category
     const groupedExpenses = {};
@@ -486,7 +487,10 @@ const updateBarExpensesLastNDays = (expenses) => {
     const datasets = categories.map(category => {
         return {
             label: category,
-            data: labels.map(date => groupedExpenses[date][category]?.reduce((sum, exp) => sum + exp.price_fabian, 0) || 0),
+            data: labels.map(date => groupedExpenses[date][category]?.reduce((sum, exp) =>
+                    // sum + exp.price_fabian,
+                    sum + (getName() === FABIAN ? exp.price_fabian : exp.price_elisa),
+                0) || 0),
             stack: 'stack1'
         };
     });
