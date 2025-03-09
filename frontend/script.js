@@ -525,9 +525,11 @@ const updateBarExpensesLastNDays = (expenses) => {
                             const date = labels[context.dataIndex];
                             const category = context.dataset.label;
                             const expenses = groupedExpenses[date][category];
-                            return expenses
+                            const total = expenses.reduce((sum, exp) => sum + exp.price_fabian, 0).toFixed(2);
+                            const expenseDetails = expenses
                                 .sort((a, b) => b.price_fabian - a.price_fabian)
                                 .map(exp => `${exp.description}: €${exp.price_fabian.toFixed(2)}`);
+                            return [`Total: €${total}`, ...expenseDetails];
                         }
                     },
                     bodyFont: {
