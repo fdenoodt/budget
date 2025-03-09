@@ -475,9 +475,9 @@ const updateBarExpensesLastNDays = (expenses) => {
             groupedExpenses[date] = {};
         }
         if (!groupedExpenses[date][category]) {
-            groupedExpenses[date][category] = 0;
+            groupedExpenses[date][category] = [];
         }
-        groupedExpenses[date][category] += price;
+        groupedExpenses[date][category].push(expense);
     });
 
     // Prepare data for the chart
@@ -486,7 +486,7 @@ const updateBarExpensesLastNDays = (expenses) => {
     const datasets = categories.map(category => {
         return {
             label: category,
-            data: labels.map(date => groupedExpenses[date][category] || 0),
+            data: labels.map(date => groupedExpenses[date][category]?.reduce((sum, exp) => sum + exp.price_fabian, 0) || 0),
             stack: 'stack1'
         };
     });
@@ -518,8 +518,19 @@ const updateBarExpensesLastNDays = (expenses) => {
                             size: 8
                         }
                     }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const date = labels[context.dataIndex];
+                            const category = context.dataset.label;
+                            const expenses = groupedExpenses[date][category];
+                            console.log(expenses.map(exp => `${exp.description}: €${exp.price_fabian.toFixed(2)}`));
+                            return expenses.map(exp => `${exp.description}: €${exp.price_fabian.toFixed(2)}`);
+                        }
+                    }
                 }
-            }
+            },
         }
     });
 }
