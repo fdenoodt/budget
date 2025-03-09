@@ -495,11 +495,12 @@ const updateBarExpensesLastNDays = (expenses) => {
     new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: labels.map(date => new Date(date).toLocaleDateString('en-US', {weekday: 'short'})),
             datasets: datasets
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
                 x: {
                     stacked: true
@@ -510,7 +511,13 @@ const updateBarExpensesLastNDays = (expenses) => {
             },
             plugins: {
                 legend: {
-                    position: 'top'
+                    position: 'top',
+                    labels: {
+                        boxWidth: 5,
+                        font: {
+                            size: 8
+                        }
+                    }
                 }
             }
         }
