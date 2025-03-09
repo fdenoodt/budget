@@ -1,5 +1,5 @@
-// const url = "http://127.0.0.1:5000"
-const url = "https://ofabian.pythonanywhere.com"
+const url = "http://127.0.0.1:5000"
+// const url = "https://ofabian.pythonanywhere.com"
 const key = authenticate()
 
 const inp_price = document.getElementById('inp_price');
@@ -147,6 +147,8 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
 
             updateDonut(groupedExenses);
             updateBar(groupedExenses, expenses);
+
+            updateBarExpensesLastNDays(data.expenses_last_n_days);
 
             printMonthlySaved(monthlySaved, monthlyEarned)
 
@@ -447,6 +449,74 @@ const updateBar = (groupedExenses, indivualExpenses) => {
 
     new Chart(ctx, config);
 }
+
+const updateBarExpensesLastNDays = (expenses) => {
+    // e.g. expenses[i] = {
+    //     "id": 1930,
+    //     "date": "2025-03-04",
+    //     "price_fabian": 7.25,
+    //     "price_elisa": 7.25,
+    //     "paid_by": "elisa",
+    //     "category": "Boodschappen",
+    //     "subcategory": "",
+    //     "description": "Ah"
+    // }
+
+    const ctx = document.getElementById('expenses_last_n_days_chart').getContext('2d');
+
+    // Group expenses by date and category
+    const groupedExpenses = {};
+    expenses.forEach(expense => {
+        const date = expense.date;
+        const category = expense.category;
+        const price = getName() === FABIAN ? expense.price_fabian : expense.price_elisa;
+
+        if (!groupedExpenses[date]) {
+            groupedExpenses[date] = {};
+        }
+        if (!groupedExpenses[date][category]) {
+            groupedExpenses[date][category] = 0;
+        }
+        groupedExpenses[date][category] += price;
+    });
+
+    // Prepare data for the chart
+    const labels = Object.keys(groupedExpenses).sort();
+    const categories = [...new Set(expenses.map(expense => expense.category))];
+    const datasets = categories.map(category => {
+        return {
+            label: category,
+            data: labels.map(date => groupedExpenses[date][category] || 0),
+            stack: 'stack1'
+        };
+    });
+
+    // Create the chart
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    stacked: true
+                },
+                y: {
+                    stacked: true
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        }
+    });
+}
+
 
 const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
     const lbl_income = document.getElementById('lbl_income');
