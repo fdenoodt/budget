@@ -279,8 +279,25 @@ def _get_all_earnings_for_each_month(who: str) -> List[float]:
     return sum_incomes_per_month[::-1][1:]
 
 
+def _get_last_5_days_expenses(who: str) -> List[Expense]:
+    # Returns a list of all expenses of `who` for the last 5 days
+    query = f"""
+        SELECT id, date, price_fabian, price_elisa, paid_by, category, subcategory, description
+        FROM expenses
+        WHERE date >= date('now', '-5 days')
+        """
+    rows = execute_sql_query(query)
 
+    # Perform expense calculations based on fetched data
+    data: List[Expense] = []
+    for row in rows:
+        (id, date, price_person, price_other, paid_by, category, subcategories, descriptions) = row
 
+        category = category.replace("null", "")
+        subcategories = subcategories.replace("null", "") if subcategories else ""
+        descriptions = descriptions.replace("null", "")
 
+        individual_cost = Expense(id, date, price_person, price_other, paid_by, category, subcategories, descriptions)
+        data.append(individual_cost)
 
-
+    return data

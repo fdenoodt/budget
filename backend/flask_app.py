@@ -17,6 +17,7 @@ from library import (
     param,
     delete_expense, edit_expense, get_total_expenses_grouped_by_category, get_historic_descriptions,
     _get_all_savings_for_each_month, _get_all_earnings_for_each_month,
+    _get_last_5_days_expenses
 )
 
 sns.set_theme()
@@ -39,7 +40,8 @@ class IndexResponse:
                  expenses: List[Expense], grouped_expenses: List[GroupedExpense],
                  monthly_expenses: List[Expense], monthly_grouped_expenses: List[GroupedExpense],
                  historic_descriptions: List[str],
-                 savings_of_lifetime_fabian: List[SavingsPair], savings_of_lifetime_elisa: List[SavingsPair]):
+                 savings_of_lifetime_fabian: List[SavingsPair], savings_of_lifetime_elisa: List[SavingsPair],
+                 expenses_last_5_days_fabian: List[Expense], expenses_last_5_days_elisa: List[Expense]):
         self.fabian = fabian  # debt
         self.elisa = elisa  # debt
 
@@ -54,6 +56,9 @@ class IndexResponse:
         self.historic_descriptions = historic_descriptions
         self.savings_of_lifetime_fabian = savings_of_lifetime_fabian
         self.savings_of_lifetime_elisa = savings_of_lifetime_elisa
+
+        self.expenses_last_5_days_fabian = expenses_last_5_days_fabian
+        self.expenses_last_5_days_elisa = expenses_last_5_days_elisa
 
     def serialize(self) -> dict:
         return {
@@ -70,7 +75,10 @@ class IndexResponse:
             "earnings_of_lifetime_elisa": self.elisa_earnings_of_lifetime,
 
             "savings_of_lifetime_fabian": [e.serialize() for e in self.savings_of_lifetime_fabian],  # [SavingsPair]
-            "savings_of_lifetime_elisa": [e.serialize() for e in self.savings_of_lifetime_elisa]
+            "savings_of_lifetime_elisa": [e.serialize() for e in self.savings_of_lifetime_elisa],
+
+            "expenses_last_5_days_fabian": [e.serialize() for e in self.expenses_last_5_days_fabian],
+            "expenses_last_5_days_elisa": [e.serialize() for e in self.expenses_last_5_days_elisa]
         }
 
 
@@ -103,12 +111,17 @@ def page_index():
     fabian_earnings_of_lifetime = _get_all_earnings_for_each_month("fabian")
     elisa_earnings_of_lifetime = _get_all_earnings_for_each_month("elisa")
 
+    # Get last 5 days expenses
+    expenses_last_5_days_fabian: List[Expense] = _get_last_5_days_expenses("fabian")
+    expenses_last_5_days_elisa: List[Expense] = _get_last_5_days_expenses("elisa")
+
     return_data = IndexResponse(fabian, elisa,
                                 fabian_earnings_of_lifetime, elisa_earnings_of_lifetime,
                                 expenses, grouped_expenses,
                                 monthly_expenses, monthly_grouped_expenses,
                                 historic_descriptions,
-                                savings_of_lifetime_fabian, savings_of_lifetime_elisa)
+                                savings_of_lifetime_fabian, savings_of_lifetime_elisa,
+                                expenses_last_5_days_fabian, expenses_last_5_days_elisa)
 
     return json.dumps(return_data.serialize())
 
