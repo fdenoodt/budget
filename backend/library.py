@@ -250,6 +250,7 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
 
     return sum_expenses
 
+
 def _get_all_earnings_for_each_month(who: str) -> List[float]:
     # Returns a list where list[i] is the sum of all expenses of `who` for the month at `i` months ago
     # Last record is the current month
@@ -270,7 +271,8 @@ def _get_all_earnings_for_each_month(who: str) -> List[float]:
 
         sum_income = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in incomes])
         sum_income += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in incomes_periodic])
-        sum_incomes_per_month.append(sum_income * -1) # st it's positive if it's a saving, negative if there's debt that month
+        sum_incomes_per_month.append(
+            sum_income * -1)  # st it's positive if it's a saving, negative if there's debt that month
 
         nb_months_ago -= 1
 
@@ -279,12 +281,12 @@ def _get_all_earnings_for_each_month(who: str) -> List[float]:
     return sum_incomes_per_month[::-1][1:]
 
 
-def _get_last_5_days_expenses(who: str) -> List[Expense]:
+def _get_last_n_days_expenses(n: int) -> List[Expense]:
     # Returns a list of all expenses of `who` for the last 5 days
     query = f"""
         SELECT id, date, price_fabian, price_elisa, paid_by, category, subcategory, description
         FROM expenses
-        WHERE date >= date('now', '-5 days')
+        WHERE date >= date('now', '-{n} days')
         """
     rows = execute_sql_query(query)
 
@@ -296,6 +298,10 @@ def _get_last_5_days_expenses(who: str) -> List[Expense]:
         category = category.replace("null", "")
         subcategories = subcategories.replace("null", "") if subcategories else ""
         descriptions = descriptions.replace("null", "")
+
+        # filter out incomes
+        if category.lower() == "inkomst" or price_person < 0 or price_other < 0:
+            continue
 
         individual_cost = Expense(id, date, price_person, price_other, paid_by, category, subcategories, descriptions)
         data.append(individual_cost)
