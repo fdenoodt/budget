@@ -484,7 +484,7 @@ const updateBarExpensesLastNDays = (expenses) => {
 
     // add missing dates
     const today = new Date();
-    n = 7; // last n days
+    const n = 7; // last n days
     const firstDate = new Date(today - n * 24 * 60 * 60 * 1000);
 
     // const lastDate = new Date(expenses[0].date);
