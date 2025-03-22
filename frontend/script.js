@@ -480,6 +480,25 @@ const updateBarExpensesLastNDays = (expenses) => {
         }
         groupedExpenses[date][category].push(expense);
     });
+    // groupedExpenses[date} = {category: [expense1, expense2, ...], ...}
+
+    // add missing dates
+    const today = new Date();
+    n = 7; // last n days
+    const firstDate = new Date(today - n * 24 * 60 * 60 * 1000);
+
+    // const lastDate = new Date(expenses[0].date);
+    const days = Math.floor((today - firstDate) / (1000 * 60 * 60 * 24));
+    for (let i = 1; i < days; i++) {
+        const date = new Date(firstDate);
+        date.setDate(date.getDate() + i);
+        const dateStr = date.toISOString().split('T')[0];
+
+        // if missing date, add it
+        if (!groupedExpenses[dateStr]) {
+            groupedExpenses[dateStr] = {};
+        }
+    }
 
     // Prepare data for the chart
     const labels = Object.keys(groupedExpenses).sort();
