@@ -500,9 +500,12 @@ const updateBarExpensesLastNDays = (expenses) => {
         }
     }
 
+    console.log(groupedExpenses)
+
     // Prepare data for the chart
-    const labels = Object.keys(groupedExpenses).sort();
+    const labels = Object.keys(groupedExpenses).sort(); // x-axis
     const categories = [...new Set(expenses.map(expense => expense.category))];
+
     const datasets = categories.map(category => {
         return {
             label: category,
