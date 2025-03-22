@@ -145,7 +145,7 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
             updateDebts(fabian, elisa);
             updateExpensesAll(expenses);
 
-            updateDonut(groupedExenses);
+            updateHorizontalBar(groupedExenses);
             updateBar(groupedExenses, expenses);
 
             updateBarExpensesLastNDays(data.expenses_last_n_days);
@@ -581,82 +581,101 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 
 }
 
-const updateDonut = (groupedExenses) => {
-    // eg prices = [400, 300, 700, 500]
-    const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst")
-    const ctx = document.getElementById('donutChart');
-
+const updateHorizontalBar = (groupedExenses) => {
+    const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
     const expensesBasics = prices[0];
     const expensesFun = prices[1];
     const expensesInfreq = prices[2];
     let income = prices[3];
 
-    // income is 2500 or higher
+    // Ensure income is at least 2500
     income = income < 2500 ? 2500 : income;
 
-
-    // eg: 2500 salary,
-    const rent = 455
-    const cap = 1_000 // Monthly budget/allowance
-
-    // To be invested in longterm savings
+    // Example constants
+    const rent = 455;
+    const cap = 1000; // Monthly budget/allowance
     const invest = income - rent - cap;
-
-    // eg 2600 - 455 - 850 - 300 = 1000
     const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
+
+    // Update your statistics display if necessary
     updateMonthlyBudgetStatistics(income, cap, rent, invest);
 
-
+    // Data for the stacked bar chart with one category
     const statistics = {
-        labels: [`🍎 €${expensesBasics.toFixed(2)}`, `🎉 €${expensesFun.toFixed(2)}`, `📎 €${expensesInfreq.toFixed(2)}`, `⬜ €${leftOver.toFixed(2)}`],
-        datasets: [{
-            data: [expensesBasics, expensesFun, expensesInfreq, leftOver],
-            backgroundColor: ['rgba(255, 99, 132, 0.5)', 'rgba(0, 122, 251, 0.5)', 'rgba(255, 205, 86, 0.5)', 'rgba(240, 240, 240, 0.5)',],
-        }]
+        labels: [''], // an empty label will hide the y-axis text
+        datasets: [
+            {
+                label: `🍎 €${expensesBasics.toFixed(2)}`,
+                data: [expensesBasics],
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                categoryPercentage: 1,
+                barPercentage: 1,
+            },
+            {
+                label: `🎉 €${expensesFun.toFixed(2)}`,
+                data: [expensesFun],
+                backgroundColor: 'rgba(0, 122, 251, 0.5)',
+                categoryPercentage: 1,
+                barPercentage: 1,
+            },
+            {
+                label: `📎 €${expensesInfreq.toFixed(2)}`,
+                data: [expensesInfreq],
+                backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                categoryPercentage: 1,
+                barPercentage: 1,
+            },
+            {
+                label: `⬜ €${leftOver.toFixed(2)}`,
+                data: [leftOver],
+                backgroundColor: 'rgba(240, 240, 240, 0.5)',
+                categoryPercentage: 1,
+                barPercentage: 1,
+            }
+        ]
     };
-
-    const plugin = {
-        id: 'my-plugin', beforeDraw: (chart, args, options) => {
-            const data = chart.data.datasets[0].data;
-            // exclude last element, round to 2 decimals
-            const sum = data.slice(0, data.length - 1).reduce((a, b) => a + b, 0).toFixed(2);
-
-            const width = chart.width, height = chart.height, ctx = chart.ctx;
-            const legendWidth = chart.legend.width;
-            const text = `€${sum}`
-            const textX = Math.round((width - ctx.measureText(text).width) / 2) - legendWidth / 2
-            const textY = height / 2;
-
-            const textLength = text.length;
-            const fontSize = textLength > 6 ? 1 : 1.5;
-
-            ctx.restore();
-            ctx.font = fontSize + "em Roboto";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = '#3e3e3e';
-
-            ctx.fillText(text, textX, textY);
-            ctx.save();
-        },
-    }
 
     const config = {
-        type: 'doughnut', data: statistics, options: {
-            responsive: true, plugins: {
+        type: 'bar',
+        data: statistics,
+        options: {
+            indexAxis: 'y', // horizontal bars
+            responsive: true,
+            layout: {
+                padding: 0 // removes extra margins
+            },
+            scales: {
+                x: {
+                    stacked: true,
+                    beginAtZero: true,
+                    max: cap,
+                    grid: { display: false },
+                },
+                y: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: { display: false } // remove the y-axis label
+                }
+            },
+            plugins: {
                 legend: {
-                    position: 'right', labels: {
+                    position: 'top', // move legend to the top
+                    labels: {
                         boxWidth: 10,
                     }
-                }, title: {}, labels: {
-                    render: 'label+value', fontSize: 14, position: 'border', // outside, border
-                    fontColor: '#FFFFFF',
+                },
+                title: {
+                    display: false
                 },
             }
-        }, plugins: [plugin]
+        },
     };
 
+    const ctx = document.getElementById('donutChart');
     new Chart(ctx, config);
 }
+
+
 
 const updateDebts = (fabian, elisa) => {
     // fabian eg: +14.00
