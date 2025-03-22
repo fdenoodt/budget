@@ -600,6 +600,17 @@ const updateHorizontalBar = (groupedExenses) => {
     // Update your statistics display if necessary
     updateMonthlyBudgetStatistics(income, cap, rent, invest);
 
+
+// Calculate total spent
+    const totalSpent = expensesBasics + expensesFun + expensesInfreq;
+
+// Add an indicator with text showing the total spent
+    const totalSpentIndicator = document.createElement('div');
+    totalSpentIndicator.style.textAlign = 'center';
+    totalSpentIndicator.style.marginTop = '10px';
+    totalSpentIndicator.innerHTML = `Total Spent: €${totalSpent.toFixed(2)}`;
+    document.getElementById('donutChart').parentNode.insertBefore(totalSpentIndicator, document.getElementById('donutChart').nextSibling);
+
     // Data for the stacked bar chart with one category
     const statistics = {
         labels: [''], // an empty label will hide the y-axis text
@@ -649,12 +660,12 @@ const updateHorizontalBar = (groupedExenses) => {
                     stacked: true,
                     beginAtZero: true,
                     max: cap,
-                    grid: { display: false },
+                    grid: {display: false},
                 },
                 y: {
                     stacked: true,
-                    grid: { display: false },
-                    ticks: { display: false } // remove the y-axis label
+                    grid: {display: false},
+                    ticks: {display: false} // remove the y-axis label
                 }
             },
             plugins: {
@@ -675,7 +686,6 @@ const updateHorizontalBar = (groupedExenses) => {
     ctx.canvas.height = 60; // Set the desired height
     new Chart(ctx, config);
 }
-
 
 
 const updateDebts = (fabian, elisa) => {
