@@ -504,7 +504,7 @@ const updateBarExpensesLastNDays = (expenses) => {
 
     // Prepare data for the chart
     const labels = Object.keys(groupedExpenses).sort(); // x-axis
-    const categories = [...new Set(expenses.map(expense => expense.category))];
+    const categories = [...new Set(expenses.filter(expense => (getName() === FABIAN ? expense.price_fabian : expense.price_elisa) > 0).map(expense => expense.category))];
 
     const datasets = categories.map(category => {
         return {
