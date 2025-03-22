@@ -582,6 +582,7 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 }
 
 const updateHorizontalBar = (groupedExenses) => {
+    // Calculate spending per category
     const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
     const expensesBasics = prices[0];
     const expensesFun = prices[1];
@@ -593,27 +594,26 @@ const updateHorizontalBar = (groupedExenses) => {
 
     // Example constants
     const rent = 455;
-    const cap = 1000; // Monthly budget/allowance
+    const cap = 2800; // Total maximum = 800 (allowance) + 2000 (money pig)
     const invest = income - rent - cap;
-    // const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
 
-    // Update your statistics display if necessary
+    // Update any other statistics display if needed
     updateMonthlyBudgetStatistics(income, cap, rent, invest);
 
-
-// Calculate total spent
+    // Calculate total spent
     const totalSpent = expensesBasics + expensesFun + expensesInfreq;
+    // Update total spent indicator text
+    document.getElementById('totalSpentIndicator').innerHTML = `Total Spent: €${totalSpent.toFixed(2)}`;
 
-// Add an indicator with text showing the total spent
-    const totalSpentIndicator = document.createElement('div');
-    totalSpentIndicator.style.textAlign = 'center';
-    totalSpentIndicator.style.marginTop = '10px';
-    totalSpentIndicator.innerHTML = `Total Spent: €${totalSpent.toFixed(2)}`;
-    document.getElementById('donutChart').parentNode.insertBefore(totalSpentIndicator, document.getElementById('donutChart').nextSibling);
+    // ---------------------
+    // Base Chart: Your spending distribution.
+    // ---------------------
+    const baseCtx = document.getElementById('baseChart').getContext('2d');
+    baseCtx.canvas.height = 60;
 
-    // Data for the stacked bar chart with one category
-    const statistics = {
-        labels: [''], // an empty label will hide the y-axis text
+    // Build the dataset for the spending segments
+    const baseData = {
+        labels: [''], // single bar; hide y-axis labels
         datasets: [
             {
                 label: `🍎 €${expensesBasics.toFixed(2)}`,
@@ -635,57 +635,114 @@ const updateHorizontalBar = (groupedExenses) => {
                 backgroundColor: 'rgba(255, 205, 86, 0.5)',
                 categoryPercentage: 1,
                 barPercentage: 1,
-            },
-            // {
-            //     label: `⬜ €${leftOver.toFixed(2)}`,
-            //     data: [leftOver],
-            //     backgroundColor: 'rgba(240, 240, 240, 0.5)',
-            //     categoryPercentage: 1,
-            //     barPercentage: 1,
-            // }
+            }
         ]
     };
 
-    const config = {
+    const baseConfig = {
         type: 'bar',
-        data: statistics,
+        data: baseData,
         options: {
-            indexAxis: 'y', // horizontal bars
+            indexAxis: 'y', // horizontal bar
             responsive: true,
-            layout: {
-                padding: 0 // removes extra margins
-            },
+            maintainAspectRatio: false,
+            layout: { padding: 0 },
             scales: {
                 x: {
                     stacked: true,
                     beginAtZero: true,
-                    max: cap,
-                    grid: {display: false},
+                    max: cap, // x-axis spans from 0 to 2800
+                    grid: { display: false },
+                    ticks: { display: false }
                 },
                 y: {
                     stacked: true,
-                    grid: {display: false},
-                    ticks: {display: false} // remove the y-axis label
+                    grid: { display: false },
+                    ticks: { display: false }
                 }
             },
             plugins: {
                 legend: {
-                    position: 'top', // move legend to the top
-                    labels: {
-                        boxWidth: 10,
-                    }
+                    position: 'top',
+                    labels: { boxWidth: 10 }
                 },
-                title: {
-                    display: false
-                },
+                title: { display: false }
             }
-        },
+        }
     };
 
-    const ctx = document.getElementById('donutChart').getContext('2d');
-    ctx.canvas.height = 60; // Set the desired height
-    new Chart(ctx, config);
-}
+    // Create the base chart
+    new Chart(baseCtx, baseConfig);
+
+    // ---------------------
+    // Overlay Chart: Display the bucket guide.
+    // ---------------------
+    // The overlay chart is a transparent stacked bar that always fills the canvas,
+    // with one segment of 800 (70% of the width) and one segment of 2000 (30%).
+    const overlayCtx = document.getElementById('overlayChart').getContext('2d');
+    overlayCtx.canvas.height = 60;
+
+    const overlayData = {
+        labels: [''],
+        datasets: [
+            {
+                label: 'Allowance',
+                data: [800],
+                // Use a transparent fill (or a light outline) so the base chart shows through.
+                backgroundColor: 'rgba(0, 255, 0, 0.2)', // light green, semi-transparent
+                categoryPercentage: 1,
+                barPercentage: 1,
+            },
+            {
+                label: 'Money Pig',
+                data: [2000],
+                backgroundColor: 'rgba(255, 0, 0, 0.2)', // light red, semi-transparent
+                categoryPercentage: 1,
+                barPercentage: 1,
+            }
+        ]
+    };
+
+    const overlayConfig = {
+        type: 'bar',
+        data: overlayData,
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: 0 },
+            scales: {
+                x: {
+                    stacked: true,
+                    beginAtZero: true,
+                    max: cap, // same maximum of 2800
+                    grid: { display: false },
+                    ticks: { display: false }
+                },
+                y: {
+                    stacked: true,
+                    grid: { display: false },
+                    ticks: { display: false }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                title: { display: false }
+            },
+            elements: {
+                bar: {
+                    categoryPercentage: 1,
+                    barPercentage: 1,
+                    borderWidth: 0
+                }
+            }
+        }
+    };
+
+    // Create the overlay chart
+    new Chart(overlayCtx, overlayConfig);
+};
+
 
 
 const updateDebts = (fabian, elisa) => {
