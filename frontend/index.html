@@ -90,17 +90,9 @@
     <div id="profile_name" class="margin" style="text-align: left;">
         Betaald door <span id="lbl_name" onclick="editName()">##</span>.
     </div>
-
-
     <div id="div_statistics" class="margin">
         <div class="swiper-container">
             <div class="swiper-wrapper">
-                <div class="swiper-slide">
-                    <div style="margin-bottom: -4em; position: relative; top: -3em;">
-                        <canvas id="donutChart"></canvas>
-                    </div>
-
-                </div>
                 <div class="swiper-slide">
                     Total spent last 7 days
                     <div id="expenses_last_n_days">
@@ -136,6 +128,11 @@
                     </div>
                 </div>
             </div>
+        </div>
+        <div style="margin-bottom: -4em; position: relative; top: -3em;">
+            <br> <br> <br>
+            <canvas id="donutChart"></canvas>
+            <br> <br> <br>
         </div>
 
         <div id="div_budget_statistics" style="margin-bottom: 0.5em;">

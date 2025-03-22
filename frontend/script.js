@@ -671,7 +671,8 @@ const updateHorizontalBar = (groupedExenses) => {
         },
     };
 
-    const ctx = document.getElementById('donutChart');
+    const ctx = document.getElementById('donutChart').getContext('2d');
+    ctx.canvas.height = 60; // Set the desired height
     new Chart(ctx, config);
 }
 
