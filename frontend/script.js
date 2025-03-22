@@ -595,7 +595,7 @@ const updateHorizontalBar = (groupedExenses) => {
     const rent = 455;
     const cap = 1000; // Monthly budget/allowance
     const invest = income - rent - cap;
-    const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
+    // const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
 
     // Update your statistics display if necessary
     updateMonthlyBudgetStatistics(income, cap, rent, invest);
@@ -636,13 +636,13 @@ const updateHorizontalBar = (groupedExenses) => {
                 categoryPercentage: 1,
                 barPercentage: 1,
             },
-            {
-                label: `⬜ €${leftOver.toFixed(2)}`,
-                data: [leftOver],
-                backgroundColor: 'rgba(240, 240, 240, 0.5)',
-                categoryPercentage: 1,
-                barPercentage: 1,
-            }
+            // {
+            //     label: `⬜ €${leftOver.toFixed(2)}`,
+            //     data: [leftOver],
+            //     backgroundColor: 'rgba(240, 240, 240, 0.5)',
+            //     categoryPercentage: 1,
+            //     barPercentage: 1,
+            // }
         ]
     };
 
