@@ -580,9 +580,42 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 }
 
 const updateDonut = (groupedExenses) => {
+    const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver,
+                               allowanceMax, moneyPigMax) => {
+        const total = expensesBasics + expensesFun + expensesInfreq + leftOver;
+        expensesBasics = expensesBasics / total;
+        expensesFun = expensesFun / total;
+        expensesInfreq = expensesInfreq / total;
+        leftOver = leftOver / total;
+
+        const maxAllowancePercent = 0.7; // 70%
+        // each expense needs to be reweighted by 70% for its part within allowance and 30% for its part within moneyPig
+        // TODO
+
+
+
+
+        return [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent];
+    }
+    const rescaleIntoPercentage = (allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
+                                   allowanceMax, moneyPigMax) => {
+        // for outer donut
+
+
+        // e.g. allowanceMax = 800, moneyPigMax = 2000 but if value spent is 700, we want donut to be almost
+        // entirely filled. Such that allowanceMax is 70% filled of the donut
+        const allowanceUsedPercent = allowanceUsed / allowanceMax * 0.7;
+        const allowanceRemainingPercent = allowanceRemaining / allowanceMax * 0.7;
+
+        const moneyPigUsedPercent = moneyPigUsed / moneyPigMax * 0.3;
+        const moneyPigRemainingPercent = moneyPigRemaining / moneyPigMax * 0.3;
+
+        return [allowanceUsedPercent, allowanceRemainingPercent, moneyPigUsedPercent, moneyPigRemainingPercent];
+
+    }
     const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
 
-    const expensesBasics = prices[0] + 900;
+    const expensesBasics = prices[0];
     const expensesFun = prices[1];
     const expensesInfreq = prices[2];
     let income = prices[3];
@@ -603,21 +636,15 @@ const updateDonut = (groupedExenses) => {
     const allowanceUsed = allowanceMax - allowanceRemaining; // e.g. 800 - 0 = 800
     const moneyPigUsed = moneyPigMax - moneyPigRemaining; // e.g. 2000 - 1950 = 50
     const leftOver = allowanceRemaining + moneyPigRemaining; // e.g. 0 + 1950 = 1950
-
     const invest = income - rent - allowanceMax;
-    // const leftOver = allowanceMax - expensesBasics - expensesFun - expensesInfreq;
 
     updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
 
-    // -----------------------------
-    // Build inner donut dataset (expenses)
-    // -----------------------------
     const innerData = [expensesBasics, expensesFun, expensesInfreq, leftOver];
     const innerLabels = [
         `🍎 €${expensesBasics.toFixed(2)}`,
         `🎉 €${expensesFun.toFixed(2)}`,
         `📎 €${expensesInfreq.toFixed(2)}`,
-        // `⬜ €${leftOver.toFixed(2)}`
         `€${allowanceRemaining.toFixed(2)} + €${moneyPigRemaining.toFixed(0)}`
     ];
     const innerColors = [
@@ -643,7 +670,20 @@ const updateDonut = (groupedExenses) => {
     const outerTotalMax = allowanceMax + moneyPigMax; // 2800 €
     const usedOuter = fillPct * outerTotalMax;
 
-    const outerData = [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
+    // const outerData = [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining]
+    //     .map(value => {
+    //         return rescaleIntoPercentage(value, allowanceMax, moneyPigMax);
+    //     })
+
+    const [allowanceUsedDisp, allowanceRemainingDisp, moneyPigUsedDisp, moneyPigRemainingDisp]
+        = rescaleIntoPercentage(
+        allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
+        allowanceMax, moneyPigMax
+    );
+
+    const outerData = [allowanceUsedDisp, allowanceRemainingDisp, moneyPigUsedDisp, moneyPigRemainingDisp];
+
+
     const outerLabels = [
         `Allowance used (€${allowanceUsed.toFixed(2)})`,
         `Allowance left (€${allowanceRemaining.toFixed(2)})`,
