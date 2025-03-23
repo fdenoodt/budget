@@ -1,5 +1,5 @@
-// const url = "http://127.0.0.1:5000"
-const url = "https://ofabian.pythonanywhere.com"
+const url = "http://127.0.0.1:5000"
+// const url = "https://ofabian.pythonanywhere.com"
 const key = authenticate()
 
 const inp_price = document.getElementById('inp_price');
@@ -489,7 +489,7 @@ const updateBarExpensesLastNDays = (expenses) => {
 
     // const lastDate = new Date(expenses[0].date);
     const days = Math.floor((today - firstDate) / (1000 * 60 * 60 * 24));
-    for (let i = 1; i < days; i++) {
+    for (let i = 1; i <= days; i++) {
         const date = new Date(firstDate);
         date.setDate(date.getDate() + i);
         const dateStr = date.toISOString().split('T')[0];
@@ -499,8 +499,6 @@ const updateBarExpensesLastNDays = (expenses) => {
             groupedExpenses[dateStr] = {};
         }
     }
-
-    console.log(groupedExpenses)
 
     // Prepare data for the chart
     const labels = Object.keys(groupedExpenses).sort(); // x-axis
