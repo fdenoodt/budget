@@ -582,7 +582,7 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 const updateDonut = (groupedExenses) => {
     const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
 
-    const expensesBasics = prices[0];
+    const expensesBasics = prices[0] + 900;
     const expensesFun = prices[1];
     const expensesInfreq = prices[2];
     let income = prices[3];
@@ -593,34 +593,31 @@ const updateDonut = (groupedExenses) => {
     const allowanceMax = 800;
     const moneyPigMax = 2000; // TODO: get from server
 
-    // Total spending from the monthly allowance (and any overspill into money pig)
-    const usedMoney = expensesBasics + expensesFun + expensesInfreq;
-
-    // Compute actual amounts from each fund:
-    const allowanceUsed = Math.min(usedMoney, allowanceMax);
-    const allowanceRemaining = Math.max(allowanceMax - usedMoney, 0);
-    const moneyPigUsed = Math.max(usedMoney - allowanceMax, 0);
-    const moneyPigRemaining = moneyPigMax - moneyPigUsed;
-
-    // For the inner donut we want the segments to sum to the allowance.
-    // If spending is within the allowance, use the raw values;
-    // if spending exceeds the allowance, scale the expense segments down so they sum to allowanceMax.
-    let innerData;
-    if (usedMoney <= allowanceMax) {
-        innerData = [expensesBasics, expensesFun, expensesInfreq, allowanceRemaining];
-    } else {
-        const factor = allowanceMax / (expensesBasics + expensesFun + expensesInfreq);
-        innerData = [
-            expensesBasics * factor,
-            expensesFun * factor,
-            expensesInfreq * factor,
-            0
-        ];
+    const usedmoney = expensesBasics + expensesFun + expensesInfreq; // e.g. 850
+    let allowanceRemaining = allowanceMax - usedmoney; // e.g. 800 - 850 = -50
+    let moneyPigRemaining = moneyPigMax; // e.g. 2000 but will be reduced by -50
+    if (allowanceRemaining < 0) {
+        moneyPigRemaining += allowanceRemaining; // e.g. 2000 - 50 = 1950
+        allowanceRemaining = 0;
     }
+    const allowanceUsed = allowanceMax - allowanceRemaining; // e.g. 800 - 0 = 800
+    const moneyPigUsed = moneyPigMax - moneyPigRemaining; // e.g. 2000 - 1950 = 50
+    const leftOver = allowanceRemaining + moneyPigRemaining; // e.g. 0 + 1950 = 1950
+
+    const invest = income - rent - allowanceMax;
+    // const leftOver = allowanceMax - expensesBasics - expensesFun - expensesInfreq;
+
+    updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
+
+    // -----------------------------
+    // Build inner donut dataset (expenses)
+    // -----------------------------
+    const innerData = [expensesBasics, expensesFun, expensesInfreq, leftOver];
     const innerLabels = [
         `🍎 €${expensesBasics.toFixed(2)}`,
         `🎉 €${expensesFun.toFixed(2)}`,
         `📎 €${expensesInfreq.toFixed(2)}`,
+        // `⬜ €${leftOver.toFixed(2)}`
         `€${allowanceRemaining.toFixed(2)} + €${moneyPigRemaining.toFixed(0)}`
     ];
     const innerColors = [
@@ -631,33 +628,29 @@ const updateDonut = (groupedExenses) => {
     ];
 
     // -----------------------------
-    // Outer donut: force 70% for allowance and 30% for money pig.
-    // We'll use an overall base total value (here 2800) so that:
-    //    outerAllowanceTotal = 70% * 2800 = 1960,
-    //    outerMoneyPigTotal = 30% * 2800 = 840.
-    // Then we scale each used amount accordingly.
+    // Compute fill percentage from inner donut
+    // (Clamp to 1 if expenses exceed cap.)
     // -----------------------------
-    const outerTotal = 2800;
-    const outerAllowanceTotal = 0.7 * outerTotal; // 1960
-    const outerMoneyPigTotal = 0.3 * outerTotal;   // 840
+    const expenseTotal = expensesBasics + expensesFun + expensesInfreq;
+    const fillPct = Math.min(expenseTotal / allowanceMax, 1);
 
-    const displayedAllowanceUsed = (allowanceUsed / allowanceMax) * outerAllowanceTotal;
-    const displayedAllowanceRemaining = outerAllowanceTotal - displayedAllowanceUsed;
-    const displayedMoneyPigUsed = (moneyPigUsed / moneyPigMax) * outerMoneyPigTotal;
-    const displayedMoneyPigRemaining = outerMoneyPigTotal - displayedMoneyPigUsed;
+    // -----------------------------
+    // Build outer donut dataset (funds indicator)
+    // Funds: allowance = 800€, money pig = 2000€
+    // The used funds are scaled with the inner donut fill.
+    // We then split the "used" portion between allowance and money pig.
+    // -----------------------------
+    const outerTotalMax = allowanceMax + moneyPigMax; // 2800 €
+    const usedOuter = fillPct * outerTotalMax;
 
-    const outerData = [
-        displayedAllowanceUsed,
-        displayedAllowanceRemaining,
-        displayedMoneyPigUsed,
-        displayedMoneyPigRemaining
-    ];
+    const outerData = [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
     const outerLabels = [
         `Allowance used (€${allowanceUsed.toFixed(2)})`,
         `Allowance left (€${allowanceRemaining.toFixed(2)})`,
         `Money Pig used (€${moneyPigUsed.toFixed(2)})`,
         `Money Pig left (€${moneyPigRemaining.toFixed(2)})`
     ];
+    console.log(outerData)
     const outerColors = [
         'rgba(0, 200, 83, 0.7)',       // used allowance
         'rgba(200, 230, 201, 0.7)',     // remaining allowance
@@ -665,10 +658,12 @@ const updateDonut = (groupedExenses) => {
         'rgba(255, 224, 178, 0.7)'      // remaining money pig
     ];
 
-    const invest = income - rent - allowanceMax;
-
-    updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
-
+    // -----------------------------
+    // Combine datasets.
+    // Adjust radii and cutout values to reduce the gap between circles.
+    // Here the outer donut is drawn from 80% to 100% of the chart radius,
+    // and the inner donut from 55% to 75%.
+    // -----------------------------
     const statistics = {
         datasets: [
             {
@@ -753,7 +748,12 @@ const plotDonut = (statistics) => {
                 title: {},
                 tooltip: {
                     callbacks: {
-                        // Optionally, you can re-enable or customize tooltips here.
+                        // label: (tooltipItem, data) => {
+                        //     // Use inner donut labels if available
+                        //     const ds = data.datasets[tooltipItem.datasetIndex];
+                        //     const labelText = (ds.labels && ds.labels[tooltipItem.dataIndex]) ? ds.labels[tooltipItem.dataIndex] : '';
+                        //     return labelText + ": " + ds.data[tooltipItem.dataIndex];
+                        // }
                     }
                 },
                 // Configuration for the labels plugin if you are using one
