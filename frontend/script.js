@@ -590,18 +590,95 @@ const updateDonut = (groupedExenses) => {
     income = income < 2500 ? 2500 : income;
 
     const rent = 455;
+    // inner donut cap remains 1,000 €
     const cap = 1_000;
     const invest = income - rent - cap;
     const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
 
     updateMonthlyBudgetStatistics(income, cap, rent, invest);
 
+    // -----------------------------
+    // Build inner donut dataset (expenses)
+    // -----------------------------
+    const innerData = [expensesBasics, expensesFun, expensesInfreq, leftOver];
+    const innerLabels = [
+        `🍎 €${expensesBasics.toFixed(2)}`,
+        `🎉 €${expensesFun.toFixed(2)}`,
+        `📎 €${expensesInfreq.toFixed(2)}`,
+        `⬜ €${leftOver.toFixed(2)}`
+    ];
+    const innerColors = [
+        'rgba(255, 99, 132, 0.5)',
+        'rgba(0, 122, 251, 0.5)',
+        'rgba(255, 205, 86, 0.5)',
+        'rgba(240, 240, 240, 0.5)'
+    ];
+
+    // -----------------------------
+    // Compute fill percentage from inner donut
+    // (Clamp to 1 if expenses exceed cap.)
+    // -----------------------------
+    const expenseTotal = expensesBasics + expensesFun + expensesInfreq;
+    const fillPct = Math.min(expenseTotal / cap, 1);
+
+    // -----------------------------
+    // Build outer donut dataset (funds indicator)
+    // Funds: allowance = 800€, money pig = 2000€
+    // The used funds are scaled with the inner donut fill.
+    // We then split the "used" portion between allowance and money pig.
+    // -----------------------------
+    const allowanceMax = 800;
+    const moneyPigMax = 2000;
+    const outerTotal = allowanceMax + moneyPigMax; // 2800 €
+    const usedOuter = fillPct * outerTotal;
+
+    let allowanceUsed, moneyPigUsed;
+    if (usedOuter <= allowanceMax) {
+        allowanceUsed = usedOuter;
+        moneyPigUsed = 0;
+    } else {
+        allowanceUsed = allowanceMax;
+        moneyPigUsed = usedOuter - allowanceMax;
+    }
+    const allowanceRemaining = allowanceMax - allowanceUsed;
+    const moneyPigRemaining = moneyPigMax - moneyPigUsed;
+
+    const outerData = [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
+    const outerLabels = [
+        `Allowance used (€${allowanceUsed.toFixed(2)})`,
+        `Allowance left (€${allowanceRemaining.toFixed(2)})`,
+        `Money Pig used (€${moneyPigUsed.toFixed(2)})`,
+        `Money Pig left (€${moneyPigRemaining.toFixed(2)})`
+    ];
+    const outerColors = [
+        'rgba(0, 200, 83, 0.7)',       // used allowance
+        'rgba(200, 230, 201, 0.7)',     // remaining allowance
+        'rgba(255, 152, 0, 0.7)',       // used money pig
+        'rgba(255, 224, 178, 0.7)'      // remaining money pig
+    ];
+
+    // -----------------------------
+    // Combine datasets.
+    // Adjust radii and cutout values to reduce the gap between circles.
+    // Here the outer donut is drawn from 80% to 100% of the chart radius,
+    // and the inner donut from 55% to 75%.
+    // -----------------------------
     const statistics = {
-        labels: [`🍎 €${expensesBasics.toFixed(2)}`, `🎉 €${expensesFun.toFixed(2)}`, `📎 €${expensesInfreq.toFixed(2)}`, `⬜ €${leftOver.toFixed(2)}`],
-        datasets: [{
-            data: [expensesBasics, expensesFun, expensesInfreq, leftOver],
-            backgroundColor: ['rgba(255, 99, 132, 0.5)', 'rgba(0, 122, 251, 0.5)', 'rgba(255, 205, 86, 0.5)', 'rgba(240, 240, 240, 0.5)'],
-        }]
+        datasets: [
+            {
+                data: outerData,
+                backgroundColor: outerColors,
+                label: 'Funds',
+                labels: outerLabels,
+                weight: 0.5, // weight 0.5 to make it thinner
+            },
+            {
+                data: innerData,
+                backgroundColor: innerColors,
+                label: 'Expenses',
+                labels: innerLabels,
+            }
+        ]
     };
 
     plotDonut(statistics);
@@ -610,103 +687,70 @@ const updateDonut = (groupedExenses) => {
 const plotDonut = (statistics) => {
     const ctx = document.getElementById('donutChart');
 
+    // Center text plugin now reads from the inner donut (dataset index 1)
     const plugin = {
-        id: 'my-plugin', beforeDraw: (chart, args, options) => {
-            const data = chart.data.datasets[0].data;
+        id: 'my-plugin',
+        beforeDraw: (chart, args, options) => {
+            // Use the inner dataset (expenses) to sum up the values (except leftover)
+            const data = chart.data.datasets[1].data;
             const sum = data.slice(0, data.length - 1).reduce((a, b) => a + b, 0).toFixed(2);
-
-            const width = chart.width, height = chart.height, ctx = chart.ctx;
-            const legendWidth = chart.legend.width;
+            const width = chart.width, height = chart.height, ctxChart = chart.ctx;
+            const legendWidth = chart.legend && chart.legend.width ? chart.legend.width : 0;
             const text = `€${sum}`;
-            const textX = Math.round((width - ctx.measureText(text).width) / 2) - legendWidth / 2;
+            const textX = Math.round((width - ctxChart.measureText(text).width) / 2) - legendWidth / 2;
             const textY = height / 2;
-
             const textLength = text.length;
             const fontSize = textLength > 6 ? 1 : 1.5;
-
-            ctx.restore();
-            ctx.font = fontSize + "em Roboto";
-            ctx.textBaseline = "middle";
-            ctx.fillStyle = '#3e3e3e';
-
-            ctx.fillText(text, textX, textY);
-            ctx.save();
+            ctxChart.restore();
+            ctxChart.font = fontSize + "em Roboto";
+            ctxChart.textBaseline = "middle";
+            ctxChart.fillStyle = '#3e3e3e';
+            ctxChart.fillText(text, textX, textY);
+            ctxChart.save();
         },
-    }
+    };
 
     const config = {
-        type: 'doughnut', data: statistics, options: {
-            responsive: true, plugins: {
+        type: 'doughnut',
+        data: statistics,
+        options: {
+            responsive: true,
+            plugins: {
                 legend: {
-                    position: 'right', labels: {
+                    position: 'right',
+                    labels: {
                         boxWidth: 10,
                     }
-                }, title: {}, labels: {
-                    render: 'label+value', fontSize: 14, position: 'border', // outside, border
+                },
+                title: {},
+                tooltip: {
+                    // callbacks: {
+                    //     label: (tooltipItem, data) => {
+                    //         console.log(tooltipItem);
+                    //         console.log(data);
+                    //         const dataset = data.datasets[tooltipItem.datasetIndex];
+                    //         const index = tooltipItem.dataIndex;
+                    //         // Safely check if custom labels exist.
+                    //         const labelText = (dataset.labels && dataset.labels[index]) ? dataset.labels[index] : '';
+                    //         return labelText + ": " + dataset.data[index];
+                    //     }
+                    // }
+                },
+                // If you are using a plugin for rendering labels on the border, keep its config
+                labels: {
+                    render: 'label+value',
+                    fontSize: 14,
+                    position: 'border',
                     fontColor: '#FFFFFF',
                 },
             }
-        }, plugins: [plugin]
+        },
+        plugins: [plugin]
     };
-
-    var outer_labels = ['A', 'B', 'C'];
-    var inner_labels = ['X', 'Y', 'Z'];
-
-    // example of two donuts inside each other
-    // var config = {
-    //     type: 'doughnut',
-    //     data: {
-    //         datasets: [{
-    //             data: [40, 15, 45],
-    //             backgroundColor: ['rgb(0, 140, 75)', 'rgb(94, 140, 0)', 'rgb(140, 89, 0)'],
-    //             label: 'Outer Dataset',
-    //             labels: outer_labels
-    //         }, {
-    //             data: [30, 20, 50],
-    //             backgroundColor: ['rgb(247, 70, 74)', 'rgb(70, 191, 189)', 'rgb(253, 180, 91)'],
-    //             label: 'Inner Dataset',
-    //             labels: inner_labels
-    //         }],
-    //         labels: outer_labels.concat(inner_labels)
-    //     },
-    //     options: {
-    //         rotation: -0.8 * Math.PI,
-    //         legend: {
-    //             position: 'left',
-    //             labels: {
-    //                 generateLabels: () => {
-    //                     let labels = [];
-    //                     config.data.datasets.forEach((ds, iDs) => labels = labels.concat(ds.labels.map((l, iLabel) => ({
-    //                         datasetIndex: iDs,
-    //                         labelIndex: iLabel,
-    //                         text: l,
-    //                         fillStyle: ds.backgroundColor[iLabel],
-    //                         hidden: chart ? chart.getDatasetMeta(iDs).data[iLabel].hidden : false,
-    //                         strokeStyle: '#fff'
-    //                     }))));
-    //                     return labels;
-    //                 }
-    //             },
-    //             onClick: (event, legendItem) => {
-    //                 let metaData = chart.getDatasetMeta(legendItem.datasetIndex).data;
-    //                 metaData[legendItem.labelIndex].hidden = !metaData[legendItem.labelIndex].hidden;
-    //                 chart.update();
-    //             }
-    //         },
-    //         tooltips: {
-    //             callbacks: {
-    //                 label: (tooltipItem, data) => {
-    //                     let dataset = data.datasets[tooltipItem.datasetIndex];
-    //                     let index = tooltipItem.index;
-    //                     return dataset.labels[index] + ": " + dataset.data[index];
-    //                 }
-    //             }
-    //         }
-    //     }
-    // };
 
     new Chart(ctx, config);
 }
+
 
 const updateDebts = (fabian, elisa) => {
     // fabian eg: +14.00
