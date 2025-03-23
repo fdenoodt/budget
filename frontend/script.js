@@ -582,7 +582,7 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 const updateDonut = (groupedExenses) => {
     const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
 
-    const expensesBasics = prices[0];
+    const expensesBasics = prices[0] + 900;
     const expensesFun = prices[1];
     const expensesInfreq = prices[2];
     let income = prices[3];
@@ -602,9 +602,10 @@ const updateDonut = (groupedExenses) => {
     }
     const allowanceUsed = allowanceMax - allowanceRemaining; // e.g. 800 - 0 = 800
     const moneyPigUsed = moneyPigMax - moneyPigRemaining; // e.g. 2000 - 1950 = 50
+    const leftOver = allowanceRemaining + moneyPigRemaining; // e.g. 0 + 1950 = 1950
 
     const invest = income - rent - allowanceMax;
-    const leftOver = allowanceMax - expensesBasics - expensesFun - expensesInfreq;
+    // const leftOver = allowanceMax - expensesBasics - expensesFun - expensesInfreq;
 
     updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
 
@@ -616,7 +617,8 @@ const updateDonut = (groupedExenses) => {
         `🍎 €${expensesBasics.toFixed(2)}`,
         `🎉 €${expensesFun.toFixed(2)}`,
         `📎 €${expensesInfreq.toFixed(2)}`,
-        `⬜ €${leftOver.toFixed(2)}`
+        // `⬜ €${leftOver.toFixed(2)}`
+        `€${allowanceRemaining.toFixed(2)} + €${moneyPigRemaining.toFixed(0)}`
     ];
     const innerColors = [
         'rgba(255, 99, 132, 0.5)',
@@ -648,7 +650,7 @@ const updateDonut = (groupedExenses) => {
         `Money Pig used (€${moneyPigUsed.toFixed(2)})`,
         `Money Pig left (€${moneyPigRemaining.toFixed(2)})`
     ];
-
+    console.log(outerData)
     const outerColors = [
         'rgba(0, 200, 83, 0.7)',       // used allowance
         'rgba(200, 230, 201, 0.7)',     // remaining allowance
