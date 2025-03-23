@@ -649,6 +649,62 @@ const plotDonut = (statistics) => {
         }, plugins: [plugin]
     };
 
+    var outer_labels = ['A', 'B', 'C'];
+    var inner_labels = ['X', 'Y', 'Z'];
+
+    // example of two donuts inside each other
+    // var config = {
+    //     type: 'doughnut',
+    //     data: {
+    //         datasets: [{
+    //             data: [40, 15, 45],
+    //             backgroundColor: ['rgb(0, 140, 75)', 'rgb(94, 140, 0)', 'rgb(140, 89, 0)'],
+    //             label: 'Outer Dataset',
+    //             labels: outer_labels
+    //         }, {
+    //             data: [30, 20, 50],
+    //             backgroundColor: ['rgb(247, 70, 74)', 'rgb(70, 191, 189)', 'rgb(253, 180, 91)'],
+    //             label: 'Inner Dataset',
+    //             labels: inner_labels
+    //         }],
+    //         labels: outer_labels.concat(inner_labels)
+    //     },
+    //     options: {
+    //         rotation: -0.8 * Math.PI,
+    //         legend: {
+    //             position: 'left',
+    //             labels: {
+    //                 generateLabels: () => {
+    //                     let labels = [];
+    //                     config.data.datasets.forEach((ds, iDs) => labels = labels.concat(ds.labels.map((l, iLabel) => ({
+    //                         datasetIndex: iDs,
+    //                         labelIndex: iLabel,
+    //                         text: l,
+    //                         fillStyle: ds.backgroundColor[iLabel],
+    //                         hidden: chart ? chart.getDatasetMeta(iDs).data[iLabel].hidden : false,
+    //                         strokeStyle: '#fff'
+    //                     }))));
+    //                     return labels;
+    //                 }
+    //             },
+    //             onClick: (event, legendItem) => {
+    //                 let metaData = chart.getDatasetMeta(legendItem.datasetIndex).data;
+    //                 metaData[legendItem.labelIndex].hidden = !metaData[legendItem.labelIndex].hidden;
+    //                 chart.update();
+    //             }
+    //         },
+    //         tooltips: {
+    //             callbacks: {
+    //                 label: (tooltipItem, data) => {
+    //                     let dataset = data.datasets[tooltipItem.datasetIndex];
+    //                     let index = tooltipItem.index;
+    //                     return dataset.labels[index] + ": " + dataset.data[index];
+    //                 }
+    //             }
+    //         }
+    //     }
+    // };
+
     new Chart(ctx, config);
 }
 
