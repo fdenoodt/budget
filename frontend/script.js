@@ -670,7 +670,7 @@ const updateDonut = (groupedExenses) => {
                 backgroundColor: outerColors,
                 label: 'Funds',
                 labels: outerLabels,
-                weight: 0.5, // weight 0.5 to make it thinner
+                weight: 0.5, // thinner outer ring
             },
             {
                 data: innerData,
@@ -716,27 +716,46 @@ const plotDonut = (statistics) => {
         options: {
             responsive: true,
             plugins: {
+                // Custom legend only for the inner donut (dataset index 1)
                 legend: {
                     position: 'right',
                     labels: {
-                        boxWidth: 10,
+                        // Generate labels based on inner dataset (dataset index 1)
+                        generateLabels: function(chart) {
+                            const ds = chart.data.datasets[1];
+                            if (!ds.labels) return [];
+                            return ds.labels.map((label, i) => {
+                                const meta = chart.getDatasetMeta(1);
+                                return {
+                                    text: label,
+                                    fillStyle: ds.backgroundColor[i],
+                                    hidden: meta.data[i].hidden,
+                                    index: i,
+                                    datasetIndex: 1
+                                };
+                            });
+                        }
+                    },
+                    onClick: function(e, legendItem, legend) {
+                        // Toggle visibility for inner donut item
+                        const chart = legend.chart;
+                        const meta = chart.getDatasetMeta(legendItem.datasetIndex);
+                        meta.data[legendItem.index].hidden = !meta.data[legendItem.index].hidden;
+                        chart.update();
                     }
                 },
                 title: {},
                 tooltip: {
-                    // callbacks: {
-                    //     label: (tooltipItem, data) => {
-                    //         console.log(tooltipItem);
-                    //         console.log(data);
-                    //         const dataset = data.datasets[tooltipItem.datasetIndex];
-                    //         const index = tooltipItem.dataIndex;
-                    //         // Safely check if custom labels exist.
-                    //         const labelText = (dataset.labels && dataset.labels[index]) ? dataset.labels[index] : '';
-                    //         return labelText + ": " + dataset.data[index];
-                    //     }
-                    // }
+                    callbacks: {
+                        // label: (tooltipItem, data) => {
+                        //     // Use inner donut labels if available
+                        //     const ds = data.datasets[tooltipItem.datasetIndex];
+                        //     const labelText = (ds.labels && ds.labels[tooltipItem.dataIndex]) ? ds.labels[tooltipItem.dataIndex] : '';
+                        //     return labelText + ": " + ds.data[tooltipItem.dataIndex];
+                        // }
+                    }
                 },
-                // If you are using a plugin for rendering labels on the border, keep its config
+                // Configuration for the labels plugin if you are using one
                 labels: {
                     render: 'label+value',
                     fontSize: 14,
@@ -750,6 +769,7 @@ const plotDonut = (statistics) => {
 
     new Chart(ctx, config);
 }
+
 
 
 const updateDebts = (fabian, elisa) => {
