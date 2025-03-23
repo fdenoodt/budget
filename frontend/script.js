@@ -580,49 +580,45 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 }
 
 const updateDonut = (groupedExenses) => {
-    // eg prices = [400, 300, 700, 500]
-    const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst")
-    const ctx = document.getElementById('donutChart');
+    const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
 
     const expensesBasics = prices[0];
     const expensesFun = prices[1];
     const expensesInfreq = prices[2];
     let income = prices[3];
 
-    // income is 2500 or higher
     income = income < 2500 ? 2500 : income;
 
-
-    // eg: 2500 salary,
-    const rent = 455
-    const cap = 1_000 // Monthly budget/allowance
-
-    // To be invested in longterm savings
+    const rent = 455;
+    const cap = 1_000;
     const invest = income - rent - cap;
-
-    // eg 2600 - 455 - 850 - 300 = 1000
     const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
-    updateMonthlyBudgetStatistics(income, cap, rent, invest);
 
+    updateMonthlyBudgetStatistics(income, cap, rent, invest);
 
     const statistics = {
         labels: [`🍎 €${expensesBasics.toFixed(2)}`, `🎉 €${expensesFun.toFixed(2)}`, `📎 €${expensesInfreq.toFixed(2)}`, `⬜ €${leftOver.toFixed(2)}`],
         datasets: [{
             data: [expensesBasics, expensesFun, expensesInfreq, leftOver],
-            backgroundColor: ['rgba(255, 99, 132, 0.5)', 'rgba(0, 122, 251, 0.5)', 'rgba(255, 205, 86, 0.5)', 'rgba(240, 240, 240, 0.5)',],
+            backgroundColor: ['rgba(255, 99, 132, 0.5)', 'rgba(0, 122, 251, 0.5)', 'rgba(255, 205, 86, 0.5)', 'rgba(240, 240, 240, 0.5)'],
         }]
     };
+
+    plotDonut(statistics);
+}
+
+const plotDonut = (statistics) => {
+    const ctx = document.getElementById('donutChart');
 
     const plugin = {
         id: 'my-plugin', beforeDraw: (chart, args, options) => {
             const data = chart.data.datasets[0].data;
-            // exclude last element, round to 2 decimals
             const sum = data.slice(0, data.length - 1).reduce((a, b) => a + b, 0).toFixed(2);
 
             const width = chart.width, height = chart.height, ctx = chart.ctx;
             const legendWidth = chart.legend.width;
-            const text = `€${sum}`
-            const textX = Math.round((width - ctx.measureText(text).width) / 2) - legendWidth / 2
+            const text = `€${sum}`;
+            const textX = Math.round((width - ctx.measureText(text).width) / 2) - legendWidth / 2;
             const textY = height / 2;
 
             const textLength = text.length;
