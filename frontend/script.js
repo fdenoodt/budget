@@ -590,12 +590,23 @@ const updateDonut = (groupedExenses) => {
     income = income < 2500 ? 2500 : income;
 
     const rent = 455;
-    // inner donut cap remains 1,000 €
-    const cap = 1_000;
-    const invest = income - rent - cap;
-    const leftOver = cap - expensesBasics - expensesFun - expensesInfreq;
+    const allowanceMax = 800;
+    const moneyPigMax = 2000; // TODO: get from server
 
-    updateMonthlyBudgetStatistics(income, cap, rent, invest);
+    const usedmoney = expensesBasics + expensesFun + expensesInfreq; // e.g. 850
+    let allowanceRemaining = allowanceMax - usedmoney; // e.g. 800 - 850 = -50
+    let moneyPigRemaining = moneyPigMax; // e.g. 2000 but will be reduced by -50
+    if (allowanceRemaining < 0) {
+        moneyPigRemaining += allowanceRemaining; // e.g. 2000 - 50 = 1950
+        allowanceRemaining = 0;
+    }
+    const allowanceUsed = allowanceMax - allowanceRemaining; // e.g. 800 - 0 = 800
+    const moneyPigUsed = moneyPigMax - moneyPigRemaining; // e.g. 2000 - 1950 = 50
+
+    const invest = income - rent - allowanceMax;
+    const leftOver = allowanceMax - expensesBasics - expensesFun - expensesInfreq;
+
+    updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
 
     // -----------------------------
     // Build inner donut dataset (expenses)
@@ -619,7 +630,7 @@ const updateDonut = (groupedExenses) => {
     // (Clamp to 1 if expenses exceed cap.)
     // -----------------------------
     const expenseTotal = expensesBasics + expensesFun + expensesInfreq;
-    const fillPct = Math.min(expenseTotal / cap, 1);
+    const fillPct = Math.min(expenseTotal / allowanceMax, 1);
 
     // -----------------------------
     // Build outer donut dataset (funds indicator)
@@ -627,21 +638,8 @@ const updateDonut = (groupedExenses) => {
     // The used funds are scaled with the inner donut fill.
     // We then split the "used" portion between allowance and money pig.
     // -----------------------------
-    const allowanceMax = 800;
-    const moneyPigMax = 2000;
-    const outerTotal = allowanceMax + moneyPigMax; // 2800 €
-    const usedOuter = fillPct * outerTotal;
-
-    let allowanceUsed, moneyPigUsed;
-    if (usedOuter <= allowanceMax) {
-        allowanceUsed = usedOuter;
-        moneyPigUsed = 0;
-    } else {
-        allowanceUsed = allowanceMax;
-        moneyPigUsed = usedOuter - allowanceMax;
-    }
-    const allowanceRemaining = allowanceMax - allowanceUsed;
-    const moneyPigRemaining = moneyPigMax - moneyPigUsed;
+    const outerTotalMax = allowanceMax + moneyPigMax; // 2800 €
+    const usedOuter = fillPct * outerTotalMax;
 
     const outerData = [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
     const outerLabels = [
@@ -650,6 +648,7 @@ const updateDonut = (groupedExenses) => {
         `Money Pig used (€${moneyPigUsed.toFixed(2)})`,
         `Money Pig left (€${moneyPigRemaining.toFixed(2)})`
     ];
+
     const outerColors = [
         'rgba(0, 200, 83, 0.7)',       // used allowance
         'rgba(200, 230, 201, 0.7)',     // remaining allowance
@@ -670,7 +669,7 @@ const updateDonut = (groupedExenses) => {
                 backgroundColor: outerColors,
                 label: 'Funds',
                 labels: outerLabels,
-                weight: 0.5, // thinner outer ring
+                weight: 0.2, // thinner outer ring
             },
             {
                 data: innerData,
@@ -721,7 +720,7 @@ const plotDonut = (statistics) => {
                     position: 'right',
                     labels: {
                         // Generate labels based on inner dataset (dataset index 1)
-                        generateLabels: function(chart) {
+                        generateLabels: function (chart) {
                             const ds = chart.data.datasets[1];
                             if (!ds.labels) return [];
                             return ds.labels.map((label, i) => {
@@ -736,7 +735,7 @@ const plotDonut = (statistics) => {
                             });
                         }
                     },
-                    onClick: function(e, legendItem, legend) {
+                    onClick: function (e, legendItem, legend) {
                         // Toggle visibility for inner donut item
                         const chart = legend.chart;
                         const meta = chart.getDatasetMeta(legendItem.datasetIndex);
@@ -769,7 +768,6 @@ const plotDonut = (statistics) => {
 
     new Chart(ctx, config);
 }
-
 
 
 const updateDebts = (fabian, elisa) => {
