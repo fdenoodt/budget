@@ -273,20 +273,28 @@ const drawChart = (chartId, valueData, targetData, labels) => {
 }
 
 const printMonthlySaved = (monthlySaved, monthlyEarned) => {
-    // monthlySaved[0] is the most recent month, monthlySaved[monthlySaved.length - 1] is the oldest month
+    // monthlySaved[0] is the oldest month, monthlySaved[monthlySaved.length - 1] is most recent month
 
+    // reverse the array so that the most recent month is at the end
+    // monthlySaved = monthlySaved.reverse();
+    // monthlyEarned = monthlyEarned.reverse();
 
     console.log('monthlySaved', monthlySaved, 'monthlyEarned', monthlyEarned)
     // Prepare the labels (last 12 months or less)
-    let labels = [];
+    let labels = []; // e.g. ["Jan", "Feb", "Mar", ...]
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentMonth = new Date().getMonth();
+
     for (let i = Math.max(0, monthlySaved.length - 12); i < monthlySaved.length; i++) {
         labels.push(monthNames[(currentMonth - monthlySaved.length + i + 1 + 12) % 12]);
     }
 
     // Prepare the data (last 12 months or less)
-    const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
+    const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)); // slice the last 12 months
+
+    // first 12 elements or less if there are less than 12 elements in the array
+    // const data = monthlySaved.slice(0, Math.min(12, monthlySaved.length));
+
     monthlySaved = data.map(d => d.value);
     let targetMonthlySaved = data.map(d => d.target);
 

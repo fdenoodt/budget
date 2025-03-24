@@ -253,7 +253,7 @@ def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsPair]:
     if up_to == 0:
         return sum_expenses
     else:
-        return sum_expenses[-up_to:]
+        return sum_expenses[:up_to]
 
 
 def _get_all_earnings_for_each_month(who: str, up_to: int) -> List[float]:
@@ -290,7 +290,7 @@ def _get_all_earnings_for_each_month(who: str, up_to: int) -> List[float]:
     if up_to == 0:
         return incomes_most_recent_first
     else:
-        return incomes_most_recent_first[-up_to:]
+        return incomes_most_recent_first[:up_to] # e.g. [:-3] = all but last 3
 
 
 def _get_last_n_days_expenses(n: int) -> List[Expense]:

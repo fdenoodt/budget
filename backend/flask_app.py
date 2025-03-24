@@ -29,8 +29,9 @@ auth = HTTPBasicAuth()
 
 @auth.verify_password
 def verify_password(username, password):
-    if username == "fabian" and password == "cool":
-        return username
+    return "fabian"
+    # if username == "fabian" and password == "cool":
+    #     return username
 
 
 # returns bot debts and all expenses
@@ -54,6 +55,7 @@ class IndexResponse:
         self.monthly_expenses = monthly_expenses
         self.monthly_grouped_expenses = monthly_grouped_expenses
         self.historic_descriptions = historic_descriptions
+
         self.savings_of_lifetime_fabian = savings_of_lifetime_fabian
         self.savings_of_lifetime_elisa = savings_of_lifetime_elisa
 
