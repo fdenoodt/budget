@@ -591,55 +591,22 @@ const updateDonut = (groupedExenses) => {
         // For each expense, must compute how much of itself it contributes to the 70% (allowance) and 30% (money pig)
         if (ratioAllowance <= 1) { // easy case, just weight by 70% for allowance
             // normalize to 1
-            // equation derived on paper
+            // Equation derived with pen and paper
             const dispLeftOver = leftOverAllowance + (((total + leftOverAllowance) / maxAllowancePercent) * maxMoneyPigPercent) // so if 50% equal split, and 40 eur left of 800 allowance -> 40 + 400 = 440 such that it is 50% of 800
 
             // rest can just remain the same
-            const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq] //.map(expense => expense / total * maxAllowancePercent);
-            return [dispBasics, dispFun, dispInfreq, dispLeftOver]; // + 30% for money pig
+            const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
+            return [dispBasics, dispFun, dispInfreq, dispLeftOver];
         } else { // more than 100% spent; part needs to be weighted by 70% and the rest by 30%
             const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
 
-            // *** Compute how much of each expense is part of the allowance ***
-            // e.g. 10 - 50 * 10 / 85 = 4.705882352941177
-            const expenseBasicsPartOfAllowance = expensesBasics - overspent * expensesBasics / total;
-            const expenseFunPartOfAllowance = expensesFun - overspent * expensesFun / total;
-            const expenseInfreqPartOfAllowance = expensesInfreq - overspent * expensesInfreq / total;
-            // const leftOverPartOfAllowance = leftOver - overspent * leftOver / total;
 
-            // normalize to 1
-            const [expenseBasicsPartOfAllowanceNorm, expenseFunPartOfAllowanceNorm, expenseInfreqPartOfAllowanceNorm] =
-                [expenseBasicsPartOfAllowance, expenseFunPartOfAllowance, expenseInfreqPartOfAllowance].map(expense => expense / total);
+            let dispLeftOver; // TODO
 
-            // multiply by 70% for allowance
-            const [dispBasicsAllowance, dispFunAllowance, dispInfreqAllowance] = [expenseBasicsPartOfAllowanceNorm, expenseFunPartOfAllowanceNorm, expenseInfreqPartOfAllowanceNorm]
-                .map(expense => expense * maxAllowancePercent);
-
-            // .7 - (4.7 + ...) = 0.0 (we know it will always be 0 actually, so computing it belo isn't necessary)
-            const dispLeftOverAllowance = ratioAllowance - [dispBasicsAllowance, dispFunAllowance, dispInfreqAllowance].reduce((a, b) => a + b, 0);
-
-            // *** Compute how much of each expense is part of the money pig ***
-            const expenseBasicsPartOfPig = overspent * expensesBasics / total;
-            const expenseFunPartOfPig = overspent * expensesFun / total;
-            const expenseInfreqPartOfPig = overspent * expensesInfreq / total;
-            const leftOverPartOfPig = overspent * leftOver / total;
-
-            // normalize to 1
-            const [expenseBasicsPartOfPigNorm, expenseFunPartOfPigNorm, expenseInfreqPartOfPigNorm, leftOverPartOfPigNorm] =
-                [expenseBasicsPartOfPig, expenseFunPartOfPig, expenseInfreqPartOfPig, leftOverPartOfPig].map(expense => expense / total);
-
-            // multiply by 30% for money pig
-            const [dispBasicsPig, dispFunPig, dispInfreqPig, dispLeftOverPig] = [
-                expenseBasicsPartOfPigNorm, expenseFunPartOfPigNorm, expenseInfreqPartOfPigNorm, leftOverPartOfPigNorm]
-                .map(expense => expense * maxMoneyPigPercent);
-
-            // add the two parts
-            const dispBasicsBoth = dispBasicsAllowance + dispBasicsPig;
-            const dispFunBoth = dispFunAllowance + dispFunPig;
-            const dispInfreqBoth = dispInfreqAllowance + dispInfreqPig;
-            const dispLeftOverBoth = +dispLeftOverPig;
-
-            return [dispBasicsBoth, dispFunBoth, dispInfreqBoth, dispLeftOverBoth];
+            // rest can just remain the same
+            const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
+            // const [dispBasics, dispFun, dispInfreq] = [800, 0, 0]
+            return [dispBasics, dispFun, dispInfreq, dispLeftOver];
         }
     }
 
@@ -662,7 +629,7 @@ const updateDonut = (groupedExenses) => {
 
     const expensesBasics = prices[0] + 24.41;
     const expensesFun = prices[1];
-    const expensesInfreq = prices[2] + 400
+    const expensesInfreq = prices[2] + 400 + 600;
     let income = prices[3];
 
     income = income < 2500 ? 2500 : income;
@@ -740,7 +707,6 @@ const updateDonut = (groupedExenses) => {
         `Money Pig used (€${moneyPigUsed.toFixed(2)})`,
         `Money Pig left (€${moneyPigRemaining.toFixed(2)})`
     ];
-    console.log(outerData)
     const outerColors = [
         'rgba(0, 200, 83, 0.7)',       // used allowance
         'rgba(200, 230, 201, 0.7)',     // remaining allowance
