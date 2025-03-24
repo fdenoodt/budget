@@ -718,17 +718,9 @@ const updateDonut = (groupedExenses) => {
     const outerColors = [
         'rgba(204, 178, 255, 1.0)',       // used allowance
         'rgba(204, 178, 255, 0.4)',       // remaining allowance
-        // 'rgba(200, 230, 201, 0.7)',     // remaining allowance
         'rgba(164, 223, 223, 1.0)',       // used money pig
         'rgba(164, 223, 223, 0.4)',      // remaining money pig
     ];
-    // const outerColors = [
-    //     'rgba(204, 178, 255, 0.7)',       // used allowance
-    //     'rgba(204, 178, 255, 0.4)',       // remaining allowance
-    //     // 'rgba(200, 230, 201, 0.7)',     // remaining allowance
-    //     'rgba(164, 223, 223, 0.7)',       // used money pig
-    //     'rgba(164, 223, 223, 0.4)',      // remaining money pig
-    // ];
 
     // -----------------------------
     // Combine datasets.
