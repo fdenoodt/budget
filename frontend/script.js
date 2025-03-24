@@ -591,9 +591,9 @@ const updateDonut = (groupedExenses) => {
         // For each expense, must compute how much of itself it contributes to the 70% (allowance) and 30% (money pig)
         if (ratioAllowance <= 1) { // easy case, just weight by 70% for allowance
             // normalize to 1
-            // rescale `dispLeftOver` to be
-            console.log(leftOverAllowance, total, maxAllowancePercent, total * maxMoneyPigPercent)
+            // equation derived on paper
             const dispLeftOver = leftOverAllowance + (((total + leftOverAllowance) / maxAllowancePercent) * maxMoneyPigPercent) // so if 50% equal split, and 40 eur left of 800 allowance -> 40 + 400 = 440 such that it is 50% of 800
+
             // rest can just remain the same
             const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq] //.map(expense => expense / total * maxAllowancePercent);
             return [dispBasics, dispFun, dispInfreq, dispLeftOver]; // + 30% for money pig
@@ -662,7 +662,7 @@ const updateDonut = (groupedExenses) => {
 
     const expensesBasics = prices[0] + 24.41;
     const expensesFun = prices[1];
-    const expensesInfreq = prices[2] - 400
+    const expensesInfreq = prices[2] + 400
     let income = prices[3];
 
     income = income < 2500 ? 2500 : income;
