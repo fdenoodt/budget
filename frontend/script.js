@@ -804,7 +804,8 @@ const plotDonut = (statistics) => {
                                     fillStyle: ds.backgroundColor[i],
                                     hidden: meta.data[i].hidden,
                                     index: i,
-                                    datasetIndex: 1
+                                    datasetIndex: 1,
+                                    lineWidth: 0,
                                 };
                             });
                         }
