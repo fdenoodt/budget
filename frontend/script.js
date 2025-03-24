@@ -580,8 +580,8 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 }
 
 const updateDonut = (groupedExenses) => {
-    const maxAllowancePercent = 0.75; // 70%
-    const maxMoneyPigPercent = 0.25; // 30%
+    const maxAllowancePercent = 0.5; // 70%
+    const maxMoneyPigPercent = 0.5; // 30%
 
     const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver, // leftOver
                                allowanceMax, moneyPigMax, leftOverAllowance, leftOverPig) => {
@@ -598,21 +598,43 @@ const updateDonut = (groupedExenses) => {
             const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
             return [dispBasics, dispFun, dispInfreq, dispLeftOver];
         } else { // more than 100% spent; part needs to be weighted by 70% and the rest by 30%
-            const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
+            // const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
+
+            // const expensesBasicsInAllowance = expensesBasics - overspent * (expensesBasics / total); // e.g. 10 - 50 * (10 / 50) = 0
+            // const expensesBasicsInPig = expensesBasics - expensesBasicsInAllowance; // e.g. 10 - 0 = 10
+            // const dispBasics = ((expensesBasicsInAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
+            //     ((expensesBasicsInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (10 / 0.3) * 0.7 = 0 + 33.33 = 33.33
+            //
+            // const expensesFunInAllowance = expensesFun - overspent * (expensesFun / total); // e.g. 0 - 50 * (0 / 50) = 0
+            // const expensesFunInPig = expensesFun - expensesFunInAllowance; // e.g. 0 - 0 = 0
+            // const dispFun = ((expensesFunInAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
+            //     ((expensesFunInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (0 / 0.3) * 0.7 = 0 + 0 = 0
+            //
+            // const expensesInfreqInAllowance = expensesInfreq - overspent * (expensesInfreq / total); // e.g. 40 - 50 * (40 / 50) = 40 - 40 = 0
+            // const expensesInfreqInPig = expensesInfreq - expensesInfreqInAllowance; // e.g. 40 - 0 = 40
+            // const dispInfreq = ((expensesInfreqInAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
+            //     ((expensesInfreqInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (40 / 0.3) * 0.7 = 0 + 93.33 = 93.33
 
 
-            let dispLeftOver; // TODO
+            // const dispLeftOver = ((leftOverAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
 
             // rest can just remain the same
-            const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
+            // const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
             // const [dispBasics, dispFun, dispInfreq] = [800, 0, 0]
-            return [dispBasics, dispFun, dispInfreq, dispLeftOver];
+            // return [dispBasics, dispFun, dispInfreq, dispLeftOver];
+
+            // I gave up so don't rescale here
+            return [expensesBasics, expensesFun, expensesInfreq, leftOver];
         }
     }
 
     const rescaleIntoPercentage = (allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
                                    allowanceMax, moneyPigMax) => {
         // for outer donut
+
+        // only rescale if allowanceRemaining < 0
+        if (allowanceRemaining >= 0)
+            return [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
 
         // e.g. allowanceMax = 800, moneyPigMax = 2000 but if value spent is 700, we want donut to be almost
         // entirely filled. Such that allowanceMax is 70% filled of the donut
