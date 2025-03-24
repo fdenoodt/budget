@@ -592,11 +592,12 @@ const updateDonut = (groupedExenses) => {
         if (ratioAllowance <= 1) { // easy case, just weight by 70% for allowance
             // normalize to 1
             // Equation derived with pen and paper
-            const dispLeftOver = leftOverAllowance + (((total + leftOverAllowance) / maxAllowancePercent) * maxMoneyPigPercent) // so if 50% equal split, and 40 eur left of 800 allowance -> 40 + 400 = 440 such that it is 50% of 800
+            const dispLeftOverAllowance = leftOverAllowance
+            const dispLeftOverPig = (((total + leftOverAllowance) / maxAllowancePercent) * maxMoneyPigPercent) // so if 50% equal split, and 40 eur left of 800 allowance -> 40 + 400 = 440 such that it is 50% of 800
 
             // rest can just remain the same
             const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
-            return [dispBasics, dispFun, dispInfreq, dispLeftOver];
+            return [dispBasics, dispFun, dispInfreq, dispLeftOverAllowance, dispLeftOverPig];
         } else { // more than 100% spent; part needs to be weighted by 70% and the rest by 30%
             // const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
 
@@ -615,16 +616,8 @@ const updateDonut = (groupedExenses) => {
             // const dispInfreq = ((expensesInfreqInAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
             //     ((expensesInfreqInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (40 / 0.3) * 0.7 = 0 + 93.33 = 93.33
 
-
-            // const dispLeftOver = ((leftOverAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
-
-            // rest can just remain the same
-            // const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
-            // const [dispBasics, dispFun, dispInfreq] = [800, 0, 0]
-            // return [dispBasics, dispFun, dispInfreq, dispLeftOver];
-
             // I gave up so don't rescale here
-            return [expensesBasics, expensesFun, expensesInfreq, leftOver];
+            return [expensesBasics, expensesFun, expensesInfreq, 0, leftOver, ]; // leftOverAllowance, leftOverPig
         }
     }
 
@@ -674,23 +667,25 @@ const updateDonut = (groupedExenses) => {
 
     updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
 
-    const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent] = rescaleInnerDonut(
+    const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent] = rescaleInnerDonut(
         expensesBasics, expensesFun, expensesInfreq, leftOver,
         allowanceMax, moneyPigMax, allowanceRemaining, moneyPigRemaining
     );
-    const innerData = [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent];
+    const innerData = [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent];
 
     const innerLabels = [
         `🍎 €${expensesBasics.toFixed(2)}`,
         `🎉 €${expensesFun.toFixed(2)}`,
         `📎 €${expensesInfreq.toFixed(2)}`,
-        `€${allowanceRemaining.toFixed(2)} + €${moneyPigRemaining.toFixed(0)}`
+        `💰 €${allowanceRemaining.toFixed(2)} / ${allowanceMax.toFixed(2)}`,
+        `🐖 €${moneyPigRemaining.toFixed(0)}`
     ];
     const innerColors = [
         'rgba(255, 99, 132, 0.5)',
         'rgba(0, 122, 251, 0.5)',
         'rgba(255, 205, 86, 0.5)',
-        'rgba(240, 240, 240, 0.5)'
+        'rgba(240, 240, 240, 0.5)',
+        'rgba(240, 240, 240, 0.5)',
     ];
 
     const expenseTotal = expensesBasics + expensesFun + expensesInfreq;
@@ -758,7 +753,7 @@ const plotDonut = (statistics) => {
         beforeDraw: (chart, args, options) => {
             // Use the inner dataset (expenses) to sum up the values (except leftover)
             const data = chart.data.datasets[1].data;
-            const sum = data.slice(0, data.length - 1).reduce((a, b) => a + b, 0).toFixed(2);
+            const sum = data.slice(0, data.length - 2).reduce((a, b) => a + b, 0).toFixed(2);
             const width = chart.width, height = chart.height, ctxChart = chart.ctx;
             const legendWidth = chart.legend && chart.legend.width ? chart.legend.width : 0;
             const text = `€${sum}`;
