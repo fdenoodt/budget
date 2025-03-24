@@ -102,12 +102,12 @@ def page_index():
     historic_descriptions: List[str] = get_historic_descriptions()  # eg: ["colruyt", "aldi", "carrefour", ...]
 
     # A list st list[i] is all expenses/incomes for month i. Last record is the current month
-    savings_of_lifetime_fabian: List[SavingsPair] = _get_all_savings_for_each_month("fabian")
-    savings_of_lifetime_elisa: List[SavingsPair] = _get_all_savings_for_each_month("elisa")
+    savings_of_lifetime_fabian: List[SavingsPair] = _get_all_savings_for_each_month("fabian", up_to=nb_months_ago)
+    savings_of_lifetime_elisa: List[SavingsPair] = _get_all_savings_for_each_month("elisa", up_to=nb_months_ago)
 
     # Monthly earnings
-    fabian_earnings_of_lifetime = _get_all_earnings_for_each_month("fabian")
-    elisa_earnings_of_lifetime = _get_all_earnings_for_each_month("elisa")
+    fabian_earnings_of_lifetime = _get_all_earnings_for_each_month("fabian", up_to=nb_months_ago)
+    elisa_earnings_of_lifetime = _get_all_earnings_for_each_month("elisa", up_to=nb_months_ago)
 
     # Get last 5 days expenses
     expenses_last_n_days: List[Expense] = _get_last_n_days_expenses(n=5)
