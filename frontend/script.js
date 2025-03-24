@@ -580,10 +580,8 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 }
 
 const updateDonut = (groupedExenses) => {
-    // const maxAllowancePercent = 0.7; // 70%
-    // const maxMoneyPigPercent = 0.3; // 30%
-    const maxAllowancePercent = 5.0; // 70%
-    const maxMoneyPigPercent = 5.0; // 30%
+    const maxAllowancePercent = 0.75; // 70%
+    const maxMoneyPigPercent = 0.25; // 30%
 
     const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver, // leftOver
                                allowanceMax, moneyPigMax, leftOverAllowance, leftOverPig) => {
@@ -593,16 +591,12 @@ const updateDonut = (groupedExenses) => {
         // For each expense, must compute how much of itself it contributes to the 70% (allowance) and 30% (money pig)
         if (ratioAllowance <= 1) { // easy case, just weight by 70% for allowance
             // normalize to 1
-            const [expensesBasicsNorm, expensesFunNorm, expensesInfreqNorm, leftOverAllowanceNorm] =
-                [expensesBasics, expensesFun, expensesInfreq, leftOverAllowance].map(expense => expense / total);
-
-            console.log('xx', expensesBasicsNorm, expensesFunNorm, expensesInfreqNorm, leftOverAllowanceNorm)
-
-            // multiply by 70% for allowance
-            const [dispBasics, dispFun, dispInfreq, dispLeftOver] = [expensesBasicsNorm, expensesFunNorm, expensesInfreqNorm, leftOverAllowanceNorm]
-                .map(expense => expense * maxAllowancePercent);
-
-            return [dispBasics, dispFun, dispInfreq, dispLeftOver + maxMoneyPigPercent]; // + 30% for money pig
+            // rescale `dispLeftOver` to be
+            console.log(leftOverAllowance, total, maxAllowancePercent, total * maxMoneyPigPercent)
+            const dispLeftOver = leftOverAllowance + (((total + leftOverAllowance) / maxAllowancePercent) * maxMoneyPigPercent) // so if 50% equal split, and 40 eur left of 800 allowance -> 40 + 400 = 440 such that it is 50% of 800
+            // rest can just remain the same
+            const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq] //.map(expense => expense / total * maxAllowancePercent);
+            return [dispBasics, dispFun, dispInfreq, dispLeftOver]; // + 30% for money pig
         } else { // more than 100% spent; part needs to be weighted by 70% and the rest by 30%
             const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
 
@@ -691,7 +685,8 @@ const updateDonut = (groupedExenses) => {
 
     updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
 
-    // const innerData = [expensesBasics, expensesFun, expensesInfreq, leftOver];
+    // const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent]
+    //     = [expensesBasics, expensesFun, expensesInfreq, leftOver];
     const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent] = rescaleInnerDonut(
         expensesBasics, expensesFun, expensesInfreq, leftOver,
         allowanceMax, moneyPigMax, allowanceRemaining, moneyPigRemaining
@@ -734,6 +729,7 @@ const updateDonut = (groupedExenses) => {
         allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
         allowanceMax, moneyPigMax
     );
+
 
     const outerData = [allowanceUsedDisp, allowanceRemainingDisp, moneyPigUsedDisp, moneyPigRemainingDisp];
 
