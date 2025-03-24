@@ -209,9 +209,11 @@ def get_historic_descriptions() -> List[str]:
     return categories
 
 
-def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
+def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsPair]:
     # Returns a list where list[i] is the sum of all expenses of `who` for the month at `i` months ago
     # Last record is the current month
+
+    # up_to : 0 = current month, -1 = last month, etc.
 
     RENT_COST = 455
     MONTHLY_ALLOWANCE = 1_000
@@ -248,12 +250,17 @@ def _get_all_savings_for_each_month(who: str) -> List[SavingsPair]:
     # remove first elt (somehow first is strange output)
     sum_expenses = sum_expenses[1:]
 
-    return sum_expenses
+    if up_to == 0:
+        return sum_expenses
+    else:
+        return sum_expenses[-up_to:]
 
 
-def _get_all_earnings_for_each_month(who: str) -> List[float]:
+def _get_all_earnings_for_each_month(who: str, up_to: int) -> List[float]:
     # Returns a list where list[i] is the sum of all expenses of `who` for the month at `i` months ago
     # Last record is the current month
+
+    # up_to : 0 = current month, -1 = last month, etc.
 
     sum_incomes_per_month: List[float] = []
     nb_months_ago = 0
@@ -277,8 +284,13 @@ def _get_all_earnings_for_each_month(who: str) -> List[float]:
         nb_months_ago -= 1
 
     # reverse the list so that the last record is the current month, and *-1 to make it positive, and remove first elt
-    # return sum_incomes_per_month[::-1]
-    return sum_incomes_per_month[::-1][1:]
+    incomes_most_recent_first = sum_incomes_per_month[::-1][1:]
+
+    # rm up_to
+    if up_to == 0:
+        return incomes_most_recent_first
+    else:
+        return incomes_most_recent_first[-up_to:]
 
 
 def _get_last_n_days_expenses(n: int) -> List[Expense]:
