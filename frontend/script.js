@@ -93,6 +93,8 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
     betterFetch(fullUrl)
         .then(response => response.json())
         .then(data => {
+            console.log(data)
+
             const fabian = data.fabian; // eg: +14.00
             const elisa = data.elisa; // eg: +12.00
 
@@ -165,6 +167,7 @@ const _formatNumber = (num) => { // eg 2.0k -> 2k, but 2.5k -> 2.5k
 }
 
 const _printMonthlySavedValues = (realValues, targetValues) => {
+    console.log('realValues', realValues, 'targetValues', targetValues)
     // Create a copy of the values and remove the last value
     realValues = realValues.slice();
     targetValues = targetValues.slice();
@@ -270,6 +273,10 @@ const drawChart = (chartId, valueData, targetData, labels) => {
 }
 
 const printMonthlySaved = (monthlySaved, monthlyEarned) => {
+    // monthlySaved[0] is the most recent month, monthlySaved[monthlySaved.length - 1] is the oldest month
+
+
+    console.log('monthlySaved', monthlySaved, 'monthlyEarned', monthlyEarned)
     // Prepare the labels (last 12 months or less)
     let labels = [];
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -583,6 +590,10 @@ const updateDonut = (groupedExenses) => {
     const maxAllowancePercent = 0.5; // 70%
     const maxMoneyPigPercent = 0.5; // 30%
 
+    const rent = 455;
+    const allowanceMax = 800; // get from server
+    const moneyPigMax = 2000; // TODO: get from server
+
     const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver, // leftOver
                                allowanceMax, moneyPigMax, leftOverAllowance, leftOverPig) => {
         const total = expensesBasics + expensesFun + expensesInfreq;
@@ -617,7 +628,7 @@ const updateDonut = (groupedExenses) => {
             //     ((expensesInfreqInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (40 / 0.3) * 0.7 = 0 + 93.33 = 93.33
 
             // I gave up so don't rescale here
-            return [expensesBasics, expensesFun, expensesInfreq, 0, leftOver, ]; // leftOverAllowance, leftOverPig
+            return [expensesBasics, expensesFun, expensesInfreq, 0, leftOver,]; // leftOverAllowance, leftOverPig
         }
     }
 
@@ -648,10 +659,6 @@ const updateDonut = (groupedExenses) => {
     let income = prices[3];
 
     income = income < 2500 ? 2500 : income;
-
-    const rent = 455;
-    const allowanceMax = 800; // get from server
-    const moneyPigMax = 2000; // TODO: get from server
 
     const usedmoney = expensesBasics + expensesFun + expensesInfreq; // e.g. 850
     let allowanceRemaining = allowanceMax - usedmoney; // e.g. 800 - 850 = -50
