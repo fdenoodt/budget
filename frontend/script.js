@@ -633,7 +633,7 @@ const updateDonut = (groupedExenses) => {
         // for outer donut
 
         // only rescale if allowanceRemaining < 0
-        if (allowanceRemaining >= 0)
+        if (allowanceRemaining === 0)
             return [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
 
         // e.g. allowanceMax = 800, moneyPigMax = 2000 but if value spent is 700, we want donut to be almost
@@ -649,15 +649,15 @@ const updateDonut = (groupedExenses) => {
     }
     const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
 
-    const expensesBasics = prices[0] + 24.41;
+    const expensesBasics = prices[0];
     const expensesFun = prices[1];
-    const expensesInfreq = prices[2] + 400 + 600;
+    const expensesInfreq = prices[2] - 200; //+ 400;
     let income = prices[3];
 
     income = income < 2500 ? 2500 : income;
 
     const rent = 455;
-    const allowanceMax = 800;
+    const allowanceMax = 800; // get from server
     const moneyPigMax = 2000; // TODO: get from server
 
     const usedmoney = expensesBasics + expensesFun + expensesInfreq; // e.g. 850
@@ -674,15 +674,11 @@ const updateDonut = (groupedExenses) => {
 
     updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
 
-    // const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent]
-    //     = [expensesBasics, expensesFun, expensesInfreq, leftOver];
     const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent] = rescaleInnerDonut(
         expensesBasics, expensesFun, expensesInfreq, leftOver,
         allowanceMax, moneyPigMax, allowanceRemaining, moneyPigRemaining
     );
     const innerData = [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent];
-    console.log('expensesBasicsPercent', 'expensesFunPercent', 'expensesInfreqPercent', 'leftOverPercent',
-        expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverPercent)
 
     const innerLabels = [
         `🍎 €${expensesBasics.toFixed(2)}`,
@@ -697,19 +693,9 @@ const updateDonut = (groupedExenses) => {
         'rgba(240, 240, 240, 0.5)'
     ];
 
-    // -----------------------------
-    // Compute fill percentage from inner donut
-    // (Clamp to 1 if expenses exceed cap.)
-    // -----------------------------
     const expenseTotal = expensesBasics + expensesFun + expensesInfreq;
     const fillPct = Math.min(expenseTotal / allowanceMax, 1);
 
-    // -----------------------------
-    // Build outer donut dataset (funds indicator)
-    // Funds: allowance = 800€, money pig = 2000€
-    // The used funds are scaled with the inner donut fill.
-    // We then split the "used" portion between allowance and money pig.
-    // -----------------------------
     const outerTotalMax = allowanceMax + moneyPigMax; // 2800 €
     const usedOuter = fillPct * outerTotalMax;
 
@@ -730,11 +716,19 @@ const updateDonut = (groupedExenses) => {
         `Money Pig left (€${moneyPigRemaining.toFixed(2)})`
     ];
     const outerColors = [
-        'rgba(0, 200, 83, 0.7)',       // used allowance
-        'rgba(200, 230, 201, 0.7)',     // remaining allowance
-        'rgba(255, 152, 0, 0.7)',       // used money pig
-        'rgba(255, 224, 178, 0.7)'      // remaining money pig
+        'rgba(204, 178, 255, 1.0)',       // used allowance
+        'rgba(204, 178, 255, 0.4)',       // remaining allowance
+        // 'rgba(200, 230, 201, 0.7)',     // remaining allowance
+        'rgba(164, 223, 223, 1.0)',       // used money pig
+        'rgba(164, 223, 223, 0.4)',      // remaining money pig
     ];
+    // const outerColors = [
+    //     'rgba(204, 178, 255, 0.7)',       // used allowance
+    //     'rgba(204, 178, 255, 0.4)',       // remaining allowance
+    //     // 'rgba(200, 230, 201, 0.7)',     // remaining allowance
+    //     'rgba(164, 223, 223, 0.7)',       // used money pig
+    //     'rgba(164, 223, 223, 0.4)',      // remaining money pig
+    // ];
 
     // -----------------------------
     // Combine datasets.
