@@ -175,7 +175,6 @@ class LineGraphs {
     }
 
     _printMonthlySavedValues(realValues, targetValues) {
-        console.log('realValues', realValues, 'targetValues', targetValues)
         // Create a copy of the values and remove the last value
         realValues = realValues.slice();
         targetValues = targetValues.slice();
@@ -209,50 +208,28 @@ class LineGraphs {
         document.querySelector('#earnings_total').textContent = `${this._formatNumber(total)}k`;
     }
 
-    drawChart(chartId, valueData, targetData, labels) {
-        // assert valueData.length === labels.length === targetData.length
-        if (targetData && valueData.length !== targetData.length) {
-            alert(`valueData.length (${valueData.length}) !== targetData.length (${targetData.length})`)
-            raiseError(`valueData.length (${valueData.length}) !== targetData.length (${targetData.length})`)
-        }
-
-        if (valueData.length !== labels.length) {
-            alert(`valueData.length (${valueData.length}) !== labels.length (${labels.length})`)
-            raiseError(`valueData.length (${valueData.length}) !== labels.length (${labels.length})`)
-        }
+    drawChart(chartId, ...dataArgs) {
+        const labels = dataArgs.pop(); // The last argument is always the labels array
+        const datasets = dataArgs.map((dataObj, index) => {
+            return {
+                label: dataObj.name || `Dataset ${index + 1}`,
+                data: dataObj.data,
+                fill: false,
+                borderColor: index === 0 ? 'rgb(75, 192, 192)' : 'rgb(255, 99, 132)',
+                tension: 0.3,
+                pointRadius: 5,
+                pointHoverRadius: 15,
+                borderDash: index === 0 ? [] : [5, 5], // Dashed line for all datasets except the first one
+            };
+        });
 
         // Get the canvas context
         const ctx = document.getElementById(chartId).getContext('2d');
 
         // Create the chart
         const visibleMax = Math.round(
-            // 10% more than the highest value, but rounded to 100
-            (valueData.reduce((a, b) => Math.max(a, b), 0) * 1.1) / 100) * 100;
-
-        const datasets = [
-            {
-                label: 'Savings',
-                data: valueData,
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.3,
-                pointRadius: 5, // make the clickable point also bigger
-                pointHoverRadius: 15,
-            }
-        ];
-
-        if (targetData) {
-            datasets.push({
-                label: 'Target',
-                data: targetData,
-                fill: false,
-                borderColor: 'rgb(255, 99, 132)',
-                tension: 0.3,
-                pointRadius: 5,
-                pointHoverRadius: 15,
-                borderDash: [5, 5], // This will make the line dashed
-            });
-        }
+            (Math.max(...dataArgs.flatMap(dataObj => dataObj.data)) * 1.1) / 100
+        ) * 100;
 
         new Chart(ctx, {
             type: 'line',
@@ -264,21 +241,20 @@ class LineGraphs {
                 responsive: true,
                 scales: {
                     y: {
-                        // beginAtZero: true,
-                        max: visibleMax, // 10% more than the highest value
+                        max: visibleMax,
                         ticks: {
                             stepSize: 100
                         }
                     },
                     x: {
                         ticks: {
-                            autoSkip: false // This will display all x-ticks (month names)
+                            autoSkip: false
                         }
                     }
                 },
                 plugins: {
                     legend: {
-                        display: false // This hides the "Savings" and "Target" buttons
+                        display: true
                     }
                 }
             }
@@ -286,12 +262,19 @@ class LineGraphs {
     }
 
     _monthlyEarnedChart(monthlyEarned, labels) {
+        // monthlyEarned = [2800, 3000, 3200, ...]
+        // labels e.g. ["Jan", "Feb", "Mar", ...]
         monthlyEarned = monthlyEarned.slice(Math.max(0, monthlyEarned.length - 12));
-        this.drawChart('earningsChart', monthlyEarned, null, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+
+        // const data1 = { name: 'Dataset 1', data: [10, 20, 30, 40] };
+        // const data2 = { name: 'Dataset 2', data: [15, 25, 35, 45] };
+        // const labels = ['January', 'February', 'March', 'April'];
+        //
+        // drawChart('myChartId', data1, data2, labels);
+
+        this.drawChart('earningsChart', {'name': 'Earnings', 'data': monthlyEarned}, labels);
         this._printMonthlyEarnedValues(monthlyEarned);
-
     }
-
 
     _getLabels(monthlySaved, nbMonthsAgo) {
         let labels = []; // e.g. ["Jan", "Feb", "Mar", ...]
@@ -308,6 +291,37 @@ class LineGraphs {
         return labels;
     }
 
+    _monthlySavedChart(data, labels) {
+        // Prepare the data (last 12 months or less)
+        data = data.slice(Math.max(0, data.length - 12)); // slice the last 12 months
+        // data[0..11] are the last 12 months with data[i] = {actual: number, target: number,
+        // target_only_pig, target_only_investments,
+        // actual_only_pig, actual_only_investments}
+
+        const actual_saved_full = data.map(d => d.actual); // actual saved (money pig + investments)
+        const target_saved_full = data.map(d => d.target); // target saved (money pig + investments)
+
+        const actual_saved_pig = data.map(d => d.actual_only_pig); // actual saved (money pig)
+        const target_saved_pig = data.map(d => d.target_only_pig); // target saved (money pig)
+
+        const actual_saved_investments = data.map(d => d.actual_only_investments); // actual saved (investments)
+        const target_saved_investments = data.map(d => d.target_only_investments); // target saved (investments)
+
+
+        // Draw the chart `savingChart`, `savingsChart` (line chart)
+        // this.drawChart('savingsChart', actual_saved_full, target_saved_full, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+        this.drawChart('savingsChart',
+            {'name': 'Actual (Pig + Invest)', 'data': actual_saved_full},
+            {'name': 'Target (Pig + Invest)', 'data': target_saved_full},
+            {'name': 'Actual (Pig)', 'data': actual_saved_pig},
+            {'name': 'Target (Pig)', 'data': target_saved_pig},
+            {'name': 'Actual (Invest)', 'data': actual_saved_investments},
+            {'name': 'Target (Invest)', 'data': target_saved_investments},
+            labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+        this._printMonthlySavedValues(actual_saved_full, target_saved_full);
+    }
+
+
     display(monthlySaved, monthlyEarned, nbMonthsAgo) {
         // *** displays monthly saved and monthly earned graphs
         // monthlySaved[0] is the oldest month, monthlySaved[monthlySaved.length - 1] is most recent month
@@ -315,20 +329,8 @@ class LineGraphs {
 
         let labels = this._getLabels(monthlySaved, nbMonthsAgo); // e.g. ["Jan", "Feb", "Mar", ...]
 
-        // Prepare the data (last 12 months or less)
-        const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)); // slice the last 12 months
 
-        monthlySaved = data.map(d => d.actual);
-        let targetMonthlySaved = data.map(d => d.target);
-
-
-        monthlySaved = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
-        targetMonthlySaved = targetMonthlySaved.slice(Math.max(0, targetMonthlySaved.length - 12));
-
-        // Draw the chart `savingChart`, `savingsChart` (line chart)
-        this.drawChart('savingsChart', monthlySaved, targetMonthlySaved, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
-
-        this._printMonthlySavedValues(monthlySaved, targetMonthlySaved);
+        this._monthlySavedChart(monthlySaved, labels);
         this._monthlyEarnedChart(monthlyEarned, labels);
     }
 
@@ -713,7 +715,7 @@ const updateDonut = (groupedExenses) => {
         `🍎 €${expensesBasics.toFixed(2)}`,
         `🎉 €${expensesFun.toFixed(2)}`,
         `📎 €${expensesInfreq.toFixed(2)}`,
-        `💰 €${Math.max(allowanceMax.toFixed(2) - allowanceRemaining.toFixed(2))} / ${allowanceMax.toFixed(0)}`,
+        `🍞 €${Math.max(allowanceMax.toFixed(2) - allowanceRemaining.toFixed(2))} / ${allowanceMax.toFixed(0)}`,
         `🐖 €${Math.max(moneyPigMax.toFixed(0) - moneyPigRemaining.toFixed(0))} / ${moneyPigMax.toFixed(0)}`
     ];
     const innerColors = [
