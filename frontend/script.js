@@ -152,176 +152,188 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
 
             updateBarExpensesLastNDays(data.expenses_last_n_days);
 
-            printMonthlySaved(monthlySaved, monthlyEarned, nbMonthsAgo);
+            new LineGraphs().display(monthlySaved, monthlyEarned, nbMonthsAgo); // displays monthly saved and monthly earned graphs
 
             ALL_EXPENSES = expenses;
         })
         .catch(e => {
-            maxTrials > 0 ? updateDebtsAndExpensesAll(maxTrials - 1) : handleError(e)
+            if (e instanceof TypeError && e.message === 'Failed to fetch') {
+                maxTrials > 0 ? updateDebtsAndExpensesAll(maxTrials - 1) : handleError(e);
+            } else {
+                // just raise the error
+                // todo
+                console.error(e)
+            }
         })
 }
 
-const _formatNumber = (num) => { // eg 2.0k -> 2k, but 2.5k -> 2.5k
-    const numm = num.toFixed(1);
-    return numm % 1 === 0 ? num.toFixed(0) : numm;
-}
 
-const _printMonthlySavedValues = (realValues, targetValues) => {
-    console.log('realValues', realValues, 'targetValues', targetValues)
-    // Create a copy of the values and remove the last value
-    realValues = realValues.slice();
-    targetValues = targetValues.slice();
-
-    // Exclude the last value (current month)
-    realValues.pop();
-    targetValues.pop();
-
-    const realAvg = realValues.reduce((a, b) => a + b, 0) / realValues.length;
-    const targetAvg = targetValues.reduce((a, b) => a + b, 0) / targetValues.length;
-    const realTotal = realValues.reduce((a, b) => a + b, 0) / 1000; // divide by 1000 to get kEUR
-
-
-    // Update the HTML elements
-    document.querySelector('#real_avg').textContent = realAvg.toFixed(0)
-
-    document.querySelector('#lbl_difference_with_target').textContent = Math.abs(realAvg - targetAvg).toFixed(0)
-    document.querySelector('#lbl_difference_with_target_ABOVE_OR_UNDER').textContent = realAvg > targetAvg ? 'above' : 'under'
-    // colour the text
-    document.querySelector('#lbl_difference_with_target').style.color = realAvg > targetAvg ? '#4BC0C0' : '#FF6384'
-
-    // document.querySelector('#lbl_savings_avg_percent').textContent = ((realAvg / targetAvg) * 100).toFixed(0)
-    document.querySelector('#real_total').textContent = `${_formatNumber(realTotal)}k`;
-}
-
-const _printMonthlyEarnedValues = (monthlyEarned) => {
-    const avg = monthlyEarned.reduce((a, b) => a + b, 0) / monthlyEarned.length;
-    const total = monthlyEarned.reduce((a, b) => a + b, 0) / 1000; // divide by 1000 to get kEUR
-
-    document.querySelector('#earnings_avg').textContent = avg.toFixed(0)
-    document.querySelector('#earnings_total').textContent = `${_formatNumber(total)}k`;
-}
-
-const drawChart = (chartId, valueData, targetData, labels) => {
-    // assert valueData.length === labels.length === targetData.length
-    if (targetData && valueData.length !== targetData.length) {
-        alert(`valueData.length (${valueData.length}) !== targetData.length (${targetData.length})`)
-        raiseError(`valueData.length (${valueData.length}) !== targetData.length (${targetData.length})`)
+class LineGraphs {
+    _formatNumber(num) { // eg 2.0k -> 2k, but 2.5k -> 2.5k
+        const numm = num.toFixed(1);
+        return numm % 1 === 0 ? num.toFixed(0) : numm;
     }
 
-    if (valueData.length !== labels.length) {
-        alert(`valueData.length (${valueData.length}) !== labels.length (${labels.length})`)
-        raiseError(`valueData.length (${valueData.length}) !== labels.length (${labels.length})`)
+    _printMonthlySavedValues(realValues, targetValues) {
+        console.log('realValues', realValues, 'targetValues', targetValues)
+        // Create a copy of the values and remove the last value
+        realValues = realValues.slice();
+        targetValues = targetValues.slice();
+
+        // Exclude the last value (current month)
+        realValues.pop();
+        targetValues.pop();
+
+        const realAvg = realValues.reduce((a, b) => a + b, 0) / realValues.length;
+        const targetAvg = targetValues.reduce((a, b) => a + b, 0) / targetValues.length;
+        const realTotal = realValues.reduce((a, b) => a + b, 0) / 1000; // divide by 1000 to get kEUR
+
+
+        // Update the HTML elements
+        document.querySelector('#real_avg').textContent = realAvg.toFixed(0)
+
+        document.querySelector('#lbl_difference_with_target').textContent = Math.abs(realAvg - targetAvg).toFixed(0)
+        document.querySelector('#lbl_difference_with_target_ABOVE_OR_UNDER').textContent = realAvg > targetAvg ? 'above' : 'under'
+        // colour the text
+        document.querySelector('#lbl_difference_with_target').style.color = realAvg > targetAvg ? '#4BC0C0' : '#FF6384'
+
+        // document.querySelector('#lbl_savings_avg_percent').textContent = ((realAvg / targetAvg) * 100).toFixed(0)
+        document.querySelector('#real_total').textContent = `${this._formatNumber(realTotal)}k`;
     }
 
-    // Get the canvas context
-    const ctx = document.getElementById(chartId).getContext('2d');
+    _printMonthlyEarnedValues(monthlyEarned) {
+        const avg = monthlyEarned.reduce((a, b) => a + b, 0) / monthlyEarned.length;
+        const total = monthlyEarned.reduce((a, b) => a + b, 0) / 1000; // divide by 1000 to get kEUR
 
-    // Create the chart
-    const visibleMax = Math.round(
-        // 10% more than the highest value, but rounded to 100
-        (valueData.reduce((a, b) => Math.max(a, b), 0) * 1.1) / 100) * 100;
+        document.querySelector('#earnings_avg').textContent = avg.toFixed(0)
+        document.querySelector('#earnings_total').textContent = `${this._formatNumber(total)}k`;
+    }
 
-    const datasets = [
-        {
-            label: 'Savings',
-            data: valueData,
-            fill: false,
-            borderColor: 'rgb(75, 192, 192)',
-            tension: 0.3,
-            pointRadius: 5, // make the clickable point also bigger
-            pointHoverRadius: 15,
+    drawChart(chartId, valueData, targetData, labels) {
+        // assert valueData.length === labels.length === targetData.length
+        if (targetData && valueData.length !== targetData.length) {
+            alert(`valueData.length (${valueData.length}) !== targetData.length (${targetData.length})`)
+            raiseError(`valueData.length (${valueData.length}) !== targetData.length (${targetData.length})`)
         }
-    ];
 
-    if (targetData) {
-        datasets.push({
-            label: 'Target',
-            data: targetData,
-            fill: false,
-            borderColor: 'rgb(255, 99, 132)',
-            tension: 0.3,
-            pointRadius: 5,
-            pointHoverRadius: 15,
-            borderDash: [5, 5], // This will make the line dashed
+        if (valueData.length !== labels.length) {
+            alert(`valueData.length (${valueData.length}) !== labels.length (${labels.length})`)
+            raiseError(`valueData.length (${valueData.length}) !== labels.length (${labels.length})`)
+        }
+
+        // Get the canvas context
+        const ctx = document.getElementById(chartId).getContext('2d');
+
+        // Create the chart
+        const visibleMax = Math.round(
+            // 10% more than the highest value, but rounded to 100
+            (valueData.reduce((a, b) => Math.max(a, b), 0) * 1.1) / 100) * 100;
+
+        const datasets = [
+            {
+                label: 'Savings',
+                data: valueData,
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.3,
+                pointRadius: 5, // make the clickable point also bigger
+                pointHoverRadius: 15,
+            }
+        ];
+
+        if (targetData) {
+            datasets.push({
+                label: 'Target',
+                data: targetData,
+                fill: false,
+                borderColor: 'rgb(255, 99, 132)',
+                tension: 0.3,
+                pointRadius: 5,
+                pointHoverRadius: 15,
+                borderDash: [5, 5], // This will make the line dashed
+            });
+        }
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        // beginAtZero: true,
+                        max: visibleMax, // 10% more than the highest value
+                        ticks: {
+                            stepSize: 100
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false // This will display all x-ticks (month names)
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false // This hides the "Savings" and "Target" buttons
+                    }
+                }
+            }
         });
     }
 
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    // beginAtZero: true,
-                    max: visibleMax, // 10% more than the highest value
-                    ticks: {
-                        stepSize: 100
-                    }
-                },
-                x: {
-                    ticks: {
-                        autoSkip: false // This will display all x-ticks (month names)
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false // This hides the "Savings" and "Target" buttons
-                }
-            }
-        }
-    });
-}
+    _monthlyEarnedChart(monthlyEarned, labels) {
+        monthlyEarned = monthlyEarned.slice(Math.max(0, monthlyEarned.length - 12));
+        this.drawChart('earningsChart', monthlyEarned, null, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+        this._printMonthlyEarnedValues(monthlyEarned);
 
-const _monthlyEarnedChart = (monthlyEarned, labels) => {
-    monthlyEarned = monthlyEarned.slice(Math.max(0, monthlyEarned.length - 12));
-    drawChart('earningsChart', monthlyEarned, null, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
-    _printMonthlyEarnedValues(monthlyEarned);
-
-}
-
-const _getLabels = (monthlySaved, nbMonthsAgo) => {
-    let labels = []; // e.g. ["Jan", "Feb", "Mar", ...]
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const currentMonth = new Date().getMonth() + nbMonthsAgo % 12; // 0 = Jan, 1 = Feb, ..., 11 = Dec
-
-
-    for (let i = Math.max(0, monthlySaved.length - 12); i < monthlySaved.length; i++) {
-        labels.push(monthNames[(currentMonth - monthlySaved.length + i + 1 + 12) % 12]);
     }
 
-    // only draw the last 12 months so filter to only show the last 12 months
-    labels = labels.slice(Math.max(0, labels.length - 12));
-    return labels;
+
+    _getLabels(monthlySaved, nbMonthsAgo) {
+        let labels = []; // e.g. ["Jan", "Feb", "Mar", ...]
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const currentMonth = new Date().getMonth() + nbMonthsAgo % 12; // 0 = Jan, 1 = Feb, ..., 11 = Dec
+
+
+        for (let i = Math.max(0, monthlySaved.length - 12); i < monthlySaved.length; i++) {
+            labels.push(monthNames[(currentMonth - monthlySaved.length + i + 1 + 12) % 12]);
+        }
+
+        // only draw the last 12 months so filter to only show the last 12 months
+        labels = labels.slice(Math.max(0, labels.length - 12));
+        return labels;
+    }
+
+    display(monthlySaved, monthlyEarned, nbMonthsAgo) {
+        // *** displays monthly saved and monthly earned graphs
+        // monthlySaved[0] is the oldest month, monthlySaved[monthlySaved.length - 1] is most recent month
+        // nbMonthsAgo e.g. -3 means 3 months ago, -2 means 2 months ago, etc.
+
+        let labels = this._getLabels(monthlySaved, nbMonthsAgo); // e.g. ["Jan", "Feb", "Mar", ...]
+
+        // Prepare the data (last 12 months or less)
+        const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)); // slice the last 12 months
+
+        monthlySaved = data.map(d => d.actual);
+        let targetMonthlySaved = data.map(d => d.target);
+
+
+        monthlySaved = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
+        targetMonthlySaved = targetMonthlySaved.slice(Math.max(0, targetMonthlySaved.length - 12));
+
+        // Draw the chart `savingChart`, `savingsChart` (line chart)
+        this.drawChart('savingsChart', monthlySaved, targetMonthlySaved, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+
+        this._printMonthlySavedValues(monthlySaved, targetMonthlySaved);
+        this._monthlyEarnedChart(monthlyEarned, labels);
+    }
+
 }
 
-const printMonthlySaved = (monthlySaved, monthlyEarned, nbMonthsAgo) => {
-
-    // monthlySaved[0] is the oldest month, monthlySaved[monthlySaved.length - 1] is most recent month
-    // nbMonthsAgo e.g. -3 means 3 months ago, -2 means 2 months ago, etc.
-
-    let labels = _getLabels(monthlySaved, nbMonthsAgo); // e.g. ["Jan", "Feb", "Mar", ...]
-
-    // Prepare the data (last 12 months or less)
-    const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)); // slice the last 12 months
-
-    monthlySaved = data.map(d => d.actual);
-    let targetMonthlySaved = data.map(d => d.target);
-
-
-    monthlySaved = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
-    targetMonthlySaved = targetMonthlySaved.slice(Math.max(0, targetMonthlySaved.length - 12));
-
-    // Draw the chart `savingChart`, `savingsChart` (line chart)
-    drawChart('savingsChart', monthlySaved, targetMonthlySaved, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
-
-    _printMonthlySavedValues(monthlySaved, targetMonthlySaved);
-    _monthlyEarnedChart(monthlyEarned, labels);
-}
 
 const getExpenesPerMainCategory = (expenses, incomeCategory) => {
     // expense: eg [{category: "Groceries", price_fabian: 10, price_elisa: 20}, ... ]
@@ -1235,3 +1247,4 @@ class ExpenseListItem {
             .catch(e => handleError(e))
     }
 }
+
