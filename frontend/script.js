@@ -261,6 +261,11 @@ const drawChart = (chartId, valueData, targetData, labels) => {
                     ticks: {
                         stepSize: 100
                     }
+                },
+                x: {
+                    ticks: {
+                        autoSkip: false // This will display all x-ticks (month names)
+                    }
                 }
             },
             plugins: {
