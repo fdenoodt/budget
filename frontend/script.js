@@ -167,7 +167,6 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
         })
 }
 
-
 class LineGraphs {
     _formatNumber(num) { // eg 2.0k -> 2k, but 2.5k -> 2.5k
         const numm = num.toFixed(1);
@@ -210,12 +209,16 @@ class LineGraphs {
 
     drawChart(chartId, ...dataArgs) {
         const labels = dataArgs.pop(); // The last argument is always the labels array
+        const colors = ['rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)',
+            'rgb(153, 102, 255)', 'rgb(255, 159, 64)', 'rgb(255, 99, 132)']
         const datasets = dataArgs.map((dataObj, index) => {
             return {
                 label: dataObj.name || `Dataset ${index + 1}`,
                 data: dataObj.data,
                 fill: false,
-                borderColor: index === 0 ? 'rgb(75, 192, 192)' : 'rgb(255, 99, 132)',
+                backgroundColor: colors[index],
+                borderColor: colors[index],
+                // borderColor: index === 0 ? 'rgb(75, 192, 192)' : 'rgb(255, 99, 132)',
                 tension: 0.3,
                 pointRadius: 5,
                 pointHoverRadius: 15,
@@ -225,6 +228,8 @@ class LineGraphs {
 
         // Get the canvas context
         const ctx = document.getElementById(chartId).getContext('2d');
+        ctx.canvas.height = 200; // Set the desired height
+
 
         // Create the chart
         const visibleMax = Math.round(
@@ -254,8 +259,15 @@ class LineGraphs {
                 },
                 plugins: {
                     legend: {
-                        display: true
-                    }
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            boxWidth: 5,
+                            font: {
+                                size: 8
+                            }
+                        }
+                    },
                 }
             }
         });
@@ -311,12 +323,12 @@ class LineGraphs {
         // Draw the chart `savingChart`, `savingsChart` (line chart)
         // this.drawChart('savingsChart', actual_saved_full, target_saved_full, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
         this.drawChart('savingsChart',
-            {'name': 'Actual (Pig + Invest)', 'data': actual_saved_full},
-            {'name': 'Target (Pig + Invest)', 'data': target_saved_full},
+            // {'name': 'Actual (Pig + Invest)', 'data': actual_saved_full},
+            // {'name': 'Target (Pig + Invest)', 'data': target_saved_full},
             {'name': 'Actual (Pig)', 'data': actual_saved_pig},
             {'name': 'Target (Pig)', 'data': target_saved_pig},
-            {'name': 'Actual (Invest)', 'data': actual_saved_investments},
-            {'name': 'Target (Invest)', 'data': target_saved_investments},
+            // {'name': 'Actual (Invest)', 'data': actual_saved_investments},
+            // {'name': 'Target (Invest)', 'data': target_saved_investments},
             labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
         this._printMonthlySavedValues(actual_saved_full, target_saved_full);
     }
@@ -335,7 +347,6 @@ class LineGraphs {
     }
 
 }
-
 
 const getExpenesPerMainCategory = (expenses, incomeCategory) => {
     // expense: eg [{category: "Groceries", price_fabian: 10, price_elisa: 20}, ... ]
@@ -602,7 +613,6 @@ const updateBarExpensesLastNDays = (expenses) => {
         }
     });
 }
-
 
 const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
     const lbl_income = document.getElementById('lbl_income');

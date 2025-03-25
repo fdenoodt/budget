@@ -1,10 +1,24 @@
 class SavingsTuple:
-    def __init__(self, actual: float, target: float) -> None:
-        self.value = actual
-        self.target = target
+    def __init__(self, actual_full: float,
+                 target_full: float, target_only_pig: float, target_only_investments: float,
+                 actual_only_pig: float,
+                 actual_only_investments: float):
+        # These are the savings (investments + money pig are both included)
+        self.actual = actual_full # both investments and money pig
+        self.actual_only_pig = actual_only_pig
+        self.actual_only_investments = actual_only_investments
+
+        self.target = target_full
+        self.target_only_pig = target_only_pig
+        self.target_only_investments = target_only_investments
 
     def serialize(self) -> dict:
         return {
-            "value": self.value,
-            "target": self.target
+            "target": self.target,
+            "target_only_pig": self.target_only_pig,
+            "target_only_investments": self.target_only_investments,
+
+            "actual": self.actual,  # actual, includes money pig and investments
+            "actual_only_pig": self.actual_only_pig,
+            "actual_only_investments": self.actual_only_investments
         }

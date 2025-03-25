@@ -232,7 +232,15 @@ def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsTuple]:
         return total_income
 
     RENT_COST = 455
-    MONTHLY_ALLOWANCE = 1_000
+    MONTHLY_ALLOWANCE = 800
+
+    # VALUES COMPUTED ON SALARY - RENT - MONTHLY_ALLOWANCE
+    INVESTMENT_PERCENT = .8
+    MONEY_PIG_PERCENT = 1 - INVESTMENT_PERCENT  # 20% of the money saved goes to the pig
+
+    # e.g. income = 2700 - 455 - 800 = 1445.
+    # 1445*80% = 1156 goes to investments
+    # 1445*20% = 289 goes to pig
 
     sum_expenses: List[SavingsTuple] = []
     nb_months_ago = 0
@@ -246,12 +254,24 @@ def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsTuple]:
         if len(expenses) == 0:
             break
 
-        savings = _get_money_saved(expenses, expenses_periodic)  # higher = more saved
-        income = _get_income(expenses, who) # higher = more income
-        INVESTMENT_REMAINDER = income - MONTHLY_ALLOWANCE - RENT_COST
+        actual_savings_full = _get_money_saved(expenses, expenses_periodic)  # higher = more saved
+        income = _get_income(expenses, who)  # higher = more income
+        target_full = income - MONTHLY_ALLOWANCE - RENT_COST
 
-        sum_expenses.append(SavingsTuple(actual=savings,
-                                         target=INVESTMENT_REMAINDER))
+        target_only_investments = target_full * INVESTMENT_PERCENT
+        target_only_pig = target_full * MONEY_PIG_PERCENT
+
+        actual_only_pig = actual_savings_full - target_only_investments  # regardless of actual spending, we always invest the same target amount!
+        actual_only_investments = target_only_investments
+
+        sum_expenses.append(SavingsTuple(actual_full=actual_savings_full,
+                                         target_full=target_full,
+
+                                         target_only_pig=target_only_pig,
+                                         target_only_investments=target_only_investments,
+
+                                         actual_only_pig=actual_only_pig,
+                                         actual_only_investments=actual_only_investments))
         nb_months_ago -= 1
 
     # reverse the list so that the last record is the current month
