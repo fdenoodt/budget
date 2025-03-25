@@ -152,7 +152,7 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
 
             updateBarExpensesLastNDays(data.expenses_last_n_days);
 
-            printMonthlySaved(monthlySaved, monthlyEarned)
+            printMonthlySaved(monthlySaved, monthlyEarned, nbMonthsAgo);
 
             ALL_EXPENSES = expenses;
         })
@@ -272,18 +272,21 @@ const drawChart = (chartId, valueData, targetData, labels) => {
     });
 }
 
-const printMonthlySaved = (monthlySaved, monthlyEarned) => {
+const _monthlyEarnedChart = (monthlyEarned, labels) => {
+    monthlyEarned = monthlyEarned.slice(Math.max(0, monthlyEarned.length - 12));
+    drawChart('earningsChart', monthlyEarned, null, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+    _printMonthlyEarnedValues(monthlyEarned);
+
+}
+
+const printMonthlySaved = (monthlySaved, monthlyEarned, nbMonthsAgo) => {
     // monthlySaved[0] is the oldest month, monthlySaved[monthlySaved.length - 1] is most recent month
+    // nbMonthsAgo e.g. -3 means 3 months ago, -2 means 2 months ago, etc.
 
-    // reverse the array so that the most recent month is at the end
-    // monthlySaved = monthlySaved.reverse();
-    // monthlyEarned = monthlyEarned.reverse();
-
-    console.log('monthlySaved', monthlySaved, 'monthlyEarned', monthlyEarned)
-    // Prepare the labels (last 12 months or less)
     let labels = []; // e.g. ["Jan", "Feb", "Mar", ...]
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    const currentMonth = new Date().getMonth();
+    const currentMonth = new Date().getMonth() + nbMonthsAgo % 12; // 0 = Jan, 1 = Feb, ..., 11 = Dec
+
 
     for (let i = Math.max(0, monthlySaved.length - 12); i < monthlySaved.length; i++) {
         labels.push(monthNames[(currentMonth - monthlySaved.length + i + 1 + 12) % 12]);
@@ -292,10 +295,7 @@ const printMonthlySaved = (monthlySaved, monthlyEarned) => {
     // Prepare the data (last 12 months or less)
     const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)); // slice the last 12 months
 
-    // first 12 elements or less if there are less than 12 elements in the array
-    // const data = monthlySaved.slice(0, Math.min(12, monthlySaved.length));
-
-    monthlySaved = data.map(d => d.value);
+    monthlySaved = data.map(d => d.actual);
     let targetMonthlySaved = data.map(d => d.target);
 
 
@@ -303,15 +303,12 @@ const printMonthlySaved = (monthlySaved, monthlyEarned) => {
     labels = labels.slice(Math.max(0, labels.length - 12));
     monthlySaved = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
     targetMonthlySaved = targetMonthlySaved.slice(Math.max(0, targetMonthlySaved.length - 12));
-    monthlyEarned = monthlyEarned.slice(Math.max(0, monthlyEarned.length - 12));
 
     // Draw the chart `savingChart`, `savingsChart` (line chart)
     drawChart('savingsChart', monthlySaved, targetMonthlySaved, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
-    drawChart('earningsChart', monthlyEarned, null, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
-
 
     _printMonthlySavedValues(monthlySaved, targetMonthlySaved);
-    _printMonthlyEarnedValues(monthlyEarned);
+    _monthlyEarnedChart(monthlyEarned, labels);
 }
 
 const getExpenesPerMainCategory = (expenses, incomeCategory) => {
@@ -692,8 +689,8 @@ const updateDonut = (groupedExenses) => {
         `🍎 €${expensesBasics.toFixed(2)}`,
         `🎉 €${expensesFun.toFixed(2)}`,
         `📎 €${expensesInfreq.toFixed(2)}`,
-        `💰 €${allowanceRemaining.toFixed(2)} / ${allowanceMax.toFixed(2)}`,
-        `🐖 €${moneyPigRemaining.toFixed(0)}`
+        `💰 €${Math.max(allowanceMax.toFixed(2) - allowanceRemaining.toFixed(2))} / ${allowanceMax.toFixed(0)}`,
+        `🐖 €${Math.max(moneyPigMax.toFixed(0) - moneyPigRemaining.toFixed(0))} / ${moneyPigMax.toFixed(0)}`
     ];
     const innerColors = [
         'rgba(255, 99, 132, 0.5)',
