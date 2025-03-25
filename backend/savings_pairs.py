@@ -1,6 +1,6 @@
-class SavingsPair:
-    def __init__(self, value: float, target: float) -> None:
-        self.value = value
+class SavingsTuple:
+    def __init__(self, actual: float, target: float) -> None:
+        self.value = actual
         self.target = target
 
     def serialize(self) -> dict:

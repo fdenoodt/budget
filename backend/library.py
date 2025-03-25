@@ -8,7 +8,7 @@ from root import ROOT
 import numpy as np
 from typing import List
 
-from savings_pairs import SavingsPair
+from savings_pairs import SavingsTuple
 import pytz
 
 
@@ -209,16 +209,32 @@ def get_historic_descriptions() -> List[str]:
     return categories
 
 
-def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsPair]:
+def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsTuple]:
     # Returns a list where list[i] is the sum of all expenses of `who` for the month at `i` months ago
     # Last record is the current month
 
     # up_to : 0 = current month, -1 = last month, etc.
 
+    def _get_money_saved(expenses, expenses_periodic):
+        # returns the money saved for the month
+        sum_expense = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses])
+        sum_expense += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses_periodic])
+        sum_expense += RENT_COST
+
+        savings = sum_expense * -1  # st it's positive if it's a saving, negative if there's debt that month
+        return savings
+
+    def _get_income(expenses, who):
+        # get all negative items in sum_expenses
+        neg_expenses: List[Expense] = [exp for exp in expenses
+                                       if exp.price_elisa + exp.price_fabian < 0]  # = all incomes
+        total_income = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in neg_expenses]) * -1
+        return total_income
+
     RENT_COST = 455
     MONTHLY_ALLOWANCE = 1_000
 
-    sum_expenses: List[SavingsPair] = []
+    sum_expenses: List[SavingsTuple] = []
     nb_months_ago = 0
 
     while True:
@@ -230,18 +246,12 @@ def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsPair]:
         if len(expenses) == 0:
             break
 
-        sum_expense = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses])
-        sum_expense += sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in expenses_periodic])
-        sum_expense += RENT_COST
-        savings = sum_expense * -1  # st it's positive if it's a saving, negative if there's debt that month
+        savings = _get_money_saved(expenses, expenses_periodic)  # higher = more saved
+        income = _get_income(expenses, who) # higher = more income
+        INVESTMENT_REMAINDER = income - MONTHLY_ALLOWANCE - RENT_COST
 
-        # get all negative items in sum_expenses
-        neg_expenses: List[Expense] = [exp for exp in expenses
-                                       if exp.price_elisa + exp.price_fabian < 0]  # = all incomes
-        total_income = sum([e.price_fabian if who == 'fabian' else e.price_elisa for e in neg_expenses]) * -1
-        INVESTMENT_REMAINDER = total_income - MONTHLY_ALLOWANCE - RENT_COST
-
-        sum_expenses.append(SavingsPair(savings, INVESTMENT_REMAINDER))
+        sum_expenses.append(SavingsTuple(actual=savings,
+                                         target=INVESTMENT_REMAINDER))
         nb_months_ago -= 1
 
     # reverse the list so that the last record is the current month
@@ -290,7 +300,7 @@ def _get_all_earnings_for_each_month(who: str, up_to: int) -> List[float]:
     if up_to == 0:
         return incomes_most_recent_first
     else:
-        return incomes_most_recent_first[:up_to] # e.g. [:-3] = all but last 3
+        return incomes_most_recent_first[:up_to]  # e.g. [:-3] = all but last 3
 
 
 def _get_last_n_days_expenses(n: int) -> List[Expense]:

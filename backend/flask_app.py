@@ -9,7 +9,7 @@ from flask_cors import CORS
 
 from expense import Expense
 from grouped_expense import GroupedExpense
-from savings_pairs import SavingsPair
+from savings_pairs import SavingsTuple
 from library import (
     add_expense,
     get_debt_per_person,
@@ -41,7 +41,7 @@ class IndexResponse:
                  expenses: List[Expense], grouped_expenses: List[GroupedExpense],
                  monthly_expenses: List[Expense], monthly_grouped_expenses: List[GroupedExpense],
                  historic_descriptions: List[str],
-                 savings_of_lifetime_fabian: List[SavingsPair], savings_of_lifetime_elisa: List[SavingsPair],
+                 savings_of_lifetime_fabian: List[SavingsTuple], savings_of_lifetime_elisa: List[SavingsTuple],
                  expenses_last_n_days: List[Expense]):
         self.fabian = fabian  # debt
         self.elisa = elisa  # debt
@@ -75,7 +75,7 @@ class IndexResponse:
             "earnings_of_lifetime_fabian": self.fabian_earnings_of_lifetime,
             "earnings_of_lifetime_elisa": self.elisa_earnings_of_lifetime,
 
-            "savings_of_lifetime_fabian": [e.serialize() for e in self.savings_of_lifetime_fabian],  # [SavingsPair]
+            "savings_of_lifetime_fabian": [e.serialize() for e in self.savings_of_lifetime_fabian],  # [SavingsTuple]
             "savings_of_lifetime_elisa": [e.serialize() for e in self.savings_of_lifetime_elisa],
 
             "expenses_last_n_days": [e.serialize() for e in self.expenses_last_n_days]
@@ -104,8 +104,8 @@ def page_index():
     historic_descriptions: List[str] = get_historic_descriptions()  # eg: ["colruyt", "aldi", "carrefour", ...]
 
     # A list st list[i] is all expenses/incomes for month i. Last record is the current month
-    savings_of_lifetime_fabian: List[SavingsPair] = _get_all_savings_for_each_month("fabian", up_to=nb_months_ago)
-    savings_of_lifetime_elisa: List[SavingsPair] = _get_all_savings_for_each_month("elisa", up_to=nb_months_ago)
+    savings_of_lifetime_fabian: List[SavingsTuple] = _get_all_savings_for_each_month("fabian", up_to=nb_months_ago)
+    savings_of_lifetime_elisa: List[SavingsTuple] = _get_all_savings_for_each_month("elisa", up_to=nb_months_ago)
 
     # Monthly earnings
     fabian_earnings_of_lifetime = _get_all_earnings_for_each_month("fabian", up_to=nb_months_ago)
