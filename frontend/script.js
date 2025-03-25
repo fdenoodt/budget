@@ -284,10 +284,7 @@ const _monthlyEarnedChart = (monthlyEarned, labels) => {
 
 }
 
-const printMonthlySaved = (monthlySaved, monthlyEarned, nbMonthsAgo) => {
-    // monthlySaved[0] is the oldest month, monthlySaved[monthlySaved.length - 1] is most recent month
-    // nbMonthsAgo e.g. -3 means 3 months ago, -2 means 2 months ago, etc.
-
+const _getLabels = (monthlySaved, nbMonthsAgo) => {
     let labels = []; // e.g. ["Jan", "Feb", "Mar", ...]
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentMonth = new Date().getMonth() + nbMonthsAgo % 12; // 0 = Jan, 1 = Feb, ..., 11 = Dec
@@ -297,6 +294,18 @@ const printMonthlySaved = (monthlySaved, monthlyEarned, nbMonthsAgo) => {
         labels.push(monthNames[(currentMonth - monthlySaved.length + i + 1 + 12) % 12]);
     }
 
+    // only draw the last 12 months so filter to only show the last 12 months
+    labels = labels.slice(Math.max(0, labels.length - 12));
+    return labels;
+}
+
+const printMonthlySaved = (monthlySaved, monthlyEarned, nbMonthsAgo) => {
+
+    // monthlySaved[0] is the oldest month, monthlySaved[monthlySaved.length - 1] is most recent month
+    // nbMonthsAgo e.g. -3 means 3 months ago, -2 means 2 months ago, etc.
+
+    let labels = _getLabels(monthlySaved, nbMonthsAgo); // e.g. ["Jan", "Feb", "Mar", ...]
+
     // Prepare the data (last 12 months or less)
     const data = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)); // slice the last 12 months
 
@@ -304,8 +313,6 @@ const printMonthlySaved = (monthlySaved, monthlyEarned, nbMonthsAgo) => {
     let targetMonthlySaved = data.map(d => d.target);
 
 
-    // only draw the last 12 months so filter to only show the last 12 months
-    labels = labels.slice(Math.max(0, labels.length - 12));
     monthlySaved = monthlySaved.slice(Math.max(0, monthlySaved.length - 12));
     targetMonthlySaved = targetMonthlySaved.slice(Math.max(0, targetMonthlySaved.length - 12));
 
