@@ -218,18 +218,17 @@ class LineGraphs {
                 fill: false,
                 backgroundColor: colors[index],
                 borderColor: colors[index],
-                // borderColor: index === 0 ? 'rgb(75, 192, 192)' : 'rgb(255, 99, 132)',
                 tension: 0.3,
                 pointRadius: 5,
                 pointHoverRadius: 15,
                 borderDash: index === 0 ? [] : [5, 5], // Dashed line for all datasets except the first one
+                hidden: index !== 0 // Hide all datasets except the first one
             };
         });
 
         // Get the canvas context
         const ctx = document.getElementById(chartId).getContext('2d');
         ctx.canvas.height = 200; // Set the desired height
-
 
         // Create the chart
         const visibleMax = Math.round(
