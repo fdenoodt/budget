@@ -90,14 +90,18 @@ const fillDescriptions = (descriptions) => {
 const computeMoneyPig = (monthlySaved) => {
     // list of how much saved at month 0, 1, 2, 3, ... (last element is current month)
     // monthlySaved[i] = {actual: number, target: number, target_only_pig, target_only_investments, actual_only_pig, actual_only_investments}
+    // remove the current month as this is still prone to change!!
+    monthlySaved = monthlySaved.slice(0, monthlySaved.length - 1) // remove the last element
 
     const moneyPigAllTime = monthlySaved.reduce((sum, month) => sum + month.actual_only_pig, 0)
     // slice func removes the first n-12 elements, so only the last 12 months are shown
-    const moneyPigLast12Months = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)) // .slice to only show the last 12 months
-        .reduce((sum, month) => sum + month.actual_only_pig, 0)
+    // const moneyPigLast12Months = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)) // .slice to only show the last 12 months
+    //     .reduce((sum, month) => sum + month.actual_only_pig, 0)
 
     // Either take sum of money saved in last 12 months, or if there is debt from older months, that that debt also into account
-    return Math.min(moneyPigAllTime, moneyPigLast12Months)
+    // also return is last 12 months was returned
+    // return [Math.min(moneyPigAllTime, moneyPigLast12Months), moneyPigLast12Months <= moneyPigAllTime] // true if last 12 months was returned
+    return [moneyPigAllTime, undefined]
 }
 const updateDebtsAndExpensesAll = (maxTrials = 3) => {
     const nbMonthsAgo = getMonthFromUrlParam();
@@ -160,7 +164,7 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
             updateDebts(fabian, elisa);
             updateExpensesAll(expenses);
 
-            updateDonut(groupedExenses, moneyPigMax = computeMoneyPig(monthlySaved));
+            updateDonut(groupedExenses, moneyPigMax = computeMoneyPig(monthlySaved)[0]);
             updateBar(groupedExenses, expenses);
 
             updateBarExpensesLastNDays(data.expenses_last_n_days);
@@ -186,31 +190,40 @@ class LineGraphs {
         return numm % 1 === 0 ? num.toFixed(0) : numm;
     }
 
-    _printMonthlySavedValues(realValues, targetValues) {
-        // Create a copy of the values and remove the last value
-        realValues = realValues.slice();
-        targetValues = targetValues.slice();
+    _printMonthlySavedValues(data_more_than_12months) {
+        // const moneyPig = computeMoneyPig(monthlySaved)
+        const [moneyPig, _] = computeMoneyPig(data_more_than_12months);
 
-        // Exclude the last value (current month)
-        realValues.pop();
-        targetValues.pop();
+        // // Create a copy of the values and remove the last value
+        // realValues = realValues.slice();
+        // targetValues = realValues.slice();
+        //
+        // // Exclude the last value (current month)
+        // realValues.pop();
+        // targetValues.pop();
 
-        const realAvg = realValues.reduce((a, b) => a + b, 0) / realValues.length;
-        const targetAvg = targetValues.reduce((a, b) => a + b, 0) / targetValues.length;
-        const realTotal = realValues.reduce((a, b) => a + b, 0) / 1000; // divide by 1000 to get kEUR
 
+        // Create a new div element
+        const newDiv = document.createElement('div');
+        newDiv.style.fontSize = '0.8em';
+        newDiv.innerHTML = `
+        Currently, your money pig contains <span id="money_pig" style="color: #4BC0C0;">€${moneyPig.toFixed(0)}</span>. Enjoy it! (Computed based on entire history. Current month not yet included.).
+        <br>
+        `;
 
-        // Update the HTML elements
-        document.querySelector('#real_avg').textContent = realAvg.toFixed(0)
+        // newDiv.innerHTML = `
+        //     On average, you saved <span id="real_avg" style="color: #4BC0C0;">${realAvg.toFixed(0)}</span> per month
+        //     (<span id="lbl_difference_with_target">${Math.abs(realAvg - targetAvg).toFixed(0)}</span>
+        //     <span id="lbl_difference_with_target_ABOVE_OR_UNDER">${realAvg > targetAvg ? 'above' : 'under'}</span> target).
+        //     <br>
+        //     Total yearly saved: <span id="real_total" style="color: #4BC0C0;">${this._formatNumber(realTotal)}k</span>.
+        // `;
 
-        document.querySelector('#lbl_difference_with_target').textContent = Math.abs(realAvg - targetAvg).toFixed(0)
-        document.querySelector('#lbl_difference_with_target_ABOVE_OR_UNDER').textContent = realAvg > targetAvg ? 'above' : 'under'
-        // colour the text
-        document.querySelector('#lbl_difference_with_target').style.color = realAvg > targetAvg ? '#4BC0C0' : '#FF6384'
-
-        // document.querySelector('#lbl_savings_avg_percent').textContent = ((realAvg / targetAvg) * 100).toFixed(0)
-        document.querySelector('#real_total').textContent = `${this._formatNumber(realTotal)}k`;
+        // Append the new div after the div with id 'savings_per_month'
+        const savingsPerMonthDiv = document.getElementById('savings_per_month');
+        savingsPerMonthDiv.parentNode.insertBefore(newDiv, savingsPerMonthDiv.nextSibling);
     }
+
 
     _printMonthlyEarnedValues(monthlyEarned) {
         const avg = monthlyEarned.reduce((a, b) => a + b, 0) / monthlyEarned.length;
@@ -315,11 +328,11 @@ class LineGraphs {
         return labels;
     }
 
-    _monthlySavedChart(data, labels) {
+    _monthlySavedChart(data_more_than_12months, labels) {
         // money pig graph
 
         // Prepare the data (last 12 months or less)
-        data = data.slice(Math.max(0, data.length - 12)); // slice the last 12 months
+        const data = data_more_than_12months.slice(Math.max(0, data_more_than_12months.length - 12)); // slice the last 12 months
         // data[0..11] are the last 12 months with data[i] = {actual: number, target: number,
         // target_only_pig, target_only_investments,
         // actual_only_pig, actual_only_investments}
@@ -336,15 +349,15 @@ class LineGraphs {
 
         // Draw the chart `savingChart`, `savingsChart` (line chart)
         // this.drawChart('savingsChart', actual_saved_full, target_saved_full, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+
+        // const [moneyPig, _] = computeMoneyPig(data_more_than_12months);
         this.drawChart('savingsChart',
-            // {'name': 'Actual (Pig + Invest)', 'data': actual_saved_full},
-            // {'name': 'Target (Pig + Invest)', 'data': target_saved_full},
-            {'name': 'Actual (Pig)', 'data': actual_saved_pig},
+            {'name': 'Actual (Pig)', 'data': actual_saved_pig, 'pointValues': []
+            },
             {'name': 'Target (Pig)', 'data': target_saved_pig},
-            // {'name': 'Actual (Invest)', 'data': actual_saved_investments},
-            // {'name': 'Target (Invest)', 'data': target_saved_investments},
             labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
-        this._printMonthlySavedValues(actual_saved_full, target_saved_full);
+
+        this._printMonthlySavedValues(data_more_than_12months);
     }
 
 
@@ -642,12 +655,13 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 }
 
 const updateDonut = (groupedExenses, moneyPigMax) => {
+    const rent = 455;
+    const allowanceMax = 800; // get from server
+
+    // These two values are just for display purposes
     const maxAllowancePercent = 0.5; // 70%
     const maxMoneyPigPercent = 0.5; // 30%
 
-    const rent = 455;
-    const allowanceMax = 800; // get from server
-    // const moneyPigMax = 2000; // TODO: get from server
 
     const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver, // leftOver
                                allowanceMax, moneyPigMax, leftOverAllowance, leftOverPig) => {
@@ -710,7 +724,7 @@ const updateDonut = (groupedExenses, moneyPigMax) => {
 
     const expensesBasics = prices[0];
     const expensesFun = prices[1];
-    const expensesInfreq = prices[2] - 200; //+ 400;
+    const expensesInfreq = prices[2]; //+ 400;
     let income = prices[3];
 
     income = income < 2500 ? 2500 : income;
@@ -807,6 +821,8 @@ const updateDonut = (groupedExenses, moneyPigMax) => {
 }
 
 const plotDonut = (statistics) => {
+    // ctx.canvas.height = 200; // Set the desired height
+
     const ctx = document.getElementById('donutChart');
 
     // Center text plugin now reads from the inner donut (dataset index 1)
