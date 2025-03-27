@@ -374,13 +374,11 @@ class LineGraphs {
 
         // const [moneyPig, _] = computeMoneyPig(data_more_than_12months);
         const pointValues = [];
-        console.log(data_more_than_12months.map(d => d.actual_only_pig))
         for (let i = 0; i < Math.min(12, nbElements); i++) {
             const start = Math.max(0, nbElements - 12);
             // take elts 0 ... start + i
             pointValues.push(computeMoneyPig(data_more_than_12months.slice(0, start + i + 1))[0]);
-        } // TODO: think if indices are correct
-        console.log(pointValues)
+        }
 
         this.drawChart('savingsChart',
             {'name': 'Actual (Pig)', 'data': actual_saved_pig, 'pointValues': pointValues},
@@ -758,7 +756,7 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
 
     const expensesBasics = prices[0];
     const expensesFun = prices[1];
-    const expensesInfreq = prices[2] + 100; //+ 400;
+    const expensesInfreq = prices[2]; //+ 400;
     let income = prices[3];
 
     income = income < 2500 ? 2500 : income;
