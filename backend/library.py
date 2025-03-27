@@ -235,7 +235,10 @@ def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsTuple]:
     MONTHLY_ALLOWANCE = 800
 
     # VALUES COMPUTED ON SALARY - RENT - MONTHLY_ALLOWANCE
-    INVESTMENT_PERCENT = .8
+    if who.lower() == 'fabian':
+        INVESTMENT_PERCENT = .85
+    else: # elisa
+        INVESTMENT_PERCENT = .82
     MONEY_PIG_PERCENT = 1 - INVESTMENT_PERCENT  # 20% of the money saved goes to the pig
 
     # e.g. income = 2700 - 455 - 800 = 1445.
@@ -271,7 +274,8 @@ def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsTuple]:
                                          target_only_investments=target_only_investments,
 
                                          actual_only_pig=actual_only_pig,
-                                         actual_only_investments=actual_only_investments))
+                                         actual_only_investments=actual_only_investments,
+                                         nb_months_ago=nb_months_ago))
         nb_months_ago -= 1
 
     # reverse the list so that the last record is the current month
