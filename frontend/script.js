@@ -164,7 +164,10 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
             updateDebts(fabian, elisa);
             updateExpensesAll(expenses);
 
-            updateDonut(groupedExenses, moneyPigMax = computeMoneyPig(monthlySaved)[0]);
+            updateDonut(groupedExenses, moneyPigMax = computeMoneyPig(monthlySaved)[0],
+                moneyPigCurrentMonthTarget = monthlySaved[monthlySaved.length - 1].target_only_pig, // look at the last month
+                toInvestCurrentMonh = monthlySaved[monthlySaved.length - 1].target_only_investments);
+
             updateBar(groupedExenses, expenses);
 
             updateBarExpensesLastNDays(data.expenses_last_n_days);
@@ -668,20 +671,18 @@ const updateBarExpensesLastNDays = (expenses) => {
     });
 }
 
-const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
-    const lbl_income = document.getElementById('lbl_income');
-    const lbl_cap = document.getElementById('lbl_cap');
-    const lbl_rent = document.getElementById('lbl_rent');
-    const lbl_invest = document.getElementById('lbl_invest');
-
-    lbl_income.innerHTML = income.toFixed(0);
-    lbl_cap.innerHTML = cap.toFixed(0);
-    lbl_rent.innerHTML = rent.toFixed(0);
-    lbl_invest.innerHTML = invest.toFixed(0);
-
+const updateMonthlyBudgetStatistics = (income, cap, rent, invest, target_pig_addition) => {
+    const div_budget_statistics = document.getElementById('div_budget_statistics');
+    div_budget_statistics.innerHTML = `
+        💲${income.toFixed(0)} = 🍞${cap.toFixed(0)} + 🏠${rent.toFixed(0)} + 💸${invest.toFixed(0)} + 🐷${target_pig_addition.toFixed(0)}
+    `;
 }
 
-const updateDonut = (groupedExenses, moneyPigMax) => {
+const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInvestCurrentMonth) => {
+    // groupedExenses:
+    // eg [{category: "Groceries", price_fabian: 10, price_elisa: 20}, ... ]
+    // moneyPigTotal: total amount in money pig
+
     const rent = 455;
     const allowanceMax = 800; // get from server
 
@@ -691,7 +692,7 @@ const updateDonut = (groupedExenses, moneyPigMax) => {
 
 
     const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver, // leftOver
-                               allowanceMax, moneyPigMax, leftOverAllowance, leftOverPig) => {
+                               allowanceMax, moneyPigTotal, leftOverAllowance, leftOverPig) => {
         const total = expensesBasics + expensesFun + expensesInfreq;
         const ratioAllowance = total / allowanceMax; // e.g. 850 / 800 = 1.0625 or 750 / 800 = 0.9375
         // the first 100% needs to be weighted by 70% and the rest by 30%.
@@ -729,20 +730,20 @@ const updateDonut = (groupedExenses, moneyPigMax) => {
     }
 
     const rescaleIntoPercentage = (allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
-                                   allowanceMax, moneyPigMax) => {
+                                   allowanceMax, moneyPigTotal) => {
         // for outer donut
 
         // only rescale if allowanceRemaining < 0
         if (allowanceRemaining === 0)
             return [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
 
-        // e.g. allowanceMax = 800, moneyPigMax = 2000 but if value spent is 700, we want donut to be almost
+        // e.g. allowanceMax = 800, moneyPigTotal = 2000 but if value spent is 700, we want donut to be almost
         // entirely filled. Such that allowanceMax is 70% filled of the donut
         const allowanceUsedPercent = allowanceUsed / allowanceMax * maxAllowancePercent; // * 0.7
         const allowanceRemainingPercent = allowanceRemaining / allowanceMax * maxAllowancePercent;
 
-        const moneyPigUsedPercent = moneyPigUsed / moneyPigMax * maxMoneyPigPercent; // * 0.3
-        const moneyPigRemainingPercent = moneyPigRemaining / moneyPigMax * maxMoneyPigPercent;
+        const moneyPigUsedPercent = moneyPigUsed / moneyPigTotal * maxMoneyPigPercent; // * 0.3
+        const moneyPigRemainingPercent = moneyPigRemaining / moneyPigTotal * maxMoneyPigPercent;
 
         return [allowanceUsedPercent, allowanceRemainingPercent, moneyPigUsedPercent, moneyPigRemainingPercent];
 
@@ -758,21 +759,20 @@ const updateDonut = (groupedExenses, moneyPigMax) => {
 
     const usedmoney = expensesBasics + expensesFun + expensesInfreq; // e.g. 850
     let allowanceRemaining = allowanceMax - usedmoney; // e.g. 800 - 850 = -50
-    let moneyPigRemaining = moneyPigMax; // e.g. 2000 but will be reduced by -50
+    let moneyPigRemaining = moneyPigTotal; // e.g. 2000 but will be reduced by -50
     if (allowanceRemaining < 0) {
         moneyPigRemaining += allowanceRemaining; // e.g. 2000 - 50 = 1950
         allowanceRemaining = 0;
     }
     const allowanceUsed = allowanceMax - allowanceRemaining; // e.g. 800 - 0 = 800
-    const moneyPigUsed = moneyPigMax - moneyPigRemaining; // e.g. 2000 - 1950 = 50
+    const moneyPigUsed = moneyPigTotal - moneyPigRemaining; // e.g. 2000 - 1950 = 50
     const leftOver = allowanceRemaining + moneyPigRemaining; // e.g. 0 + 1950 = 1950
-    const invest = income - rent - allowanceMax;
 
-    updateMonthlyBudgetStatistics(income, allowanceMax, rent, invest);
+    updateMonthlyBudgetStatistics(income, allowanceMax, rent, toInvestCurrentMonth, toPutAssideMoneyPig)
 
     const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent] = rescaleInnerDonut(
         expensesBasics, expensesFun, expensesInfreq, leftOver,
-        allowanceMax, moneyPigMax, allowanceRemaining, moneyPigRemaining
+        allowanceMax, moneyPigTotal, allowanceRemaining, moneyPigRemaining
     );
     const innerData = [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent];
 
@@ -781,7 +781,7 @@ const updateDonut = (groupedExenses, moneyPigMax) => {
         `🎉 €${expensesFun.toFixed(2)}`,
         `📎 €${expensesInfreq.toFixed(2)}`,
         `🍞 €${Math.max(allowanceMax.toFixed(2) - allowanceRemaining.toFixed(2))} / ${allowanceMax.toFixed(0)}`,
-        `🐖 €${Math.max(moneyPigMax.toFixed(0) - moneyPigRemaining.toFixed(0))} / ${moneyPigMax.toFixed(0)}`
+        `🐖 €${Math.max(moneyPigTotal.toFixed(0) - moneyPigRemaining.toFixed(0))} / ${moneyPigTotal.toFixed(0)}`
     ];
     const innerColors = [
         'rgba(255, 99, 132, 0.5)',
@@ -794,13 +794,13 @@ const updateDonut = (groupedExenses, moneyPigMax) => {
     const expenseTotal = expensesBasics + expensesFun + expensesInfreq;
     const fillPct = Math.min(expenseTotal / allowanceMax, 1);
 
-    const outerTotalMax = allowanceMax + moneyPigMax; // 2800 €
+    const outerTotalMax = allowanceMax + moneyPigTotal; // 2800 €
     const usedOuter = fillPct * outerTotalMax;
 
     const [allowanceUsedDisp, allowanceRemainingDisp, moneyPigUsedDisp, moneyPigRemainingDisp]
         = rescaleIntoPercentage(
         allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
-        allowanceMax, moneyPigMax
+        allowanceMax, moneyPigTotal
     );
 
 
