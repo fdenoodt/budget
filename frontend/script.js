@@ -715,13 +715,18 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
             // const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
             // no clue how to find a good `leftOver` score analytically, so we do approximate
 
-            const err_target = 0.005; // define leftOver should be 0.5 * total ~= leftOver
-            let leftOver = 0; // start already at 800 as lower values are not possible (assuming a 50% split)
-            // 1-allowanceUsedDisp-moneyPigUsedDisp should equal leftOver / normalizer
-            while (true) {
-                if (Math.abs((1 - allowanceUsedDisp - moneyPigUsedDisp) - (leftOver / (total + leftOver))) < err_target)
-                    break;
-                leftOver += 1;
+            // chatgpt generated code
+            const err_target = 0.005;
+            const X = 1 - allowanceUsedDisp - moneyPigUsedDisp;
+            let leftOver = Math.round((X * total) / (1 - X)); // initial estimate
+
+            // refine if needed within tolerance
+            while (Math.abs(X - leftOver / (total + leftOver)) > err_target) {
+                if (leftOver / (total + leftOver) < X) {
+                    leftOver++;
+                } else {
+                    leftOver--;
+                }
             }
 
 
@@ -752,8 +757,8 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
     const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
 
     const expensesBasics = prices[0];
-    const expensesFun = prices[1] + 400;
-    const expensesInfreq = prices[2]; //+ 400;
+    const expensesFun = prices[1];
+    const expensesInfreq = prices[2] + 100; //+ 400;
     let income = prices[3];
 
     income = income < 2500 ? 2500 : income;
