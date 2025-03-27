@@ -86,6 +86,19 @@ const fillDescriptions = (descriptions) => {
     }
 }
 
+
+const computeMoneyPig = (monthlySaved) => {
+    // list of how much saved at month 0, 1, 2, 3, ... (last element is current month)
+    // monthlySaved[i] = {actual: number, target: number, target_only_pig, target_only_investments, actual_only_pig, actual_only_investments}
+
+    const moneyPigAllTime = monthlySaved.reduce((sum, month) => sum + month.actual_only_pig, 0)
+    // slice func removes the first n-12 elements, so only the last 12 months are shown
+    const moneyPigLast12Months = monthlySaved.slice(Math.max(0, monthlySaved.length - 12)) // .slice to only show the last 12 months
+        .reduce((sum, month) => sum + month.actual_only_pig, 0)
+
+    // Either take sum of money saved in last 12 months, or if there is debt from older months, that that debt also into account
+    return Math.min(moneyPigAllTime, moneyPigLast12Months)
+}
 const updateDebtsAndExpensesAll = (maxTrials = 3) => {
     const nbMonthsAgo = getMonthFromUrlParam();
 
@@ -147,7 +160,7 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
             updateDebts(fabian, elisa);
             updateExpensesAll(expenses);
 
-            updateDonut(groupedExenses);
+            updateDonut(groupedExenses, moneyPigMax = computeMoneyPig(monthlySaved));
             updateBar(groupedExenses, expenses);
 
             updateBarExpensesLastNDays(data.expenses_last_n_days);
@@ -303,6 +316,8 @@ class LineGraphs {
     }
 
     _monthlySavedChart(data, labels) {
+        // money pig graph
+
         // Prepare the data (last 12 months or less)
         data = data.slice(Math.max(0, data.length - 12)); // slice the last 12 months
         // data[0..11] are the last 12 months with data[i] = {actual: number, target: number,
@@ -626,13 +641,13 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest) => {
 
 }
 
-const updateDonut = (groupedExenses) => {
+const updateDonut = (groupedExenses, moneyPigMax) => {
     const maxAllowancePercent = 0.5; // 70%
     const maxMoneyPigPercent = 0.5; // 30%
 
     const rent = 455;
     const allowanceMax = 800; // get from server
-    const moneyPigMax = 2000; // TODO: get from server
+    // const moneyPigMax = 2000; // TODO: get from server
 
     const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver, // leftOver
                                allowanceMax, moneyPigMax, leftOverAllowance, leftOverPig) => {
