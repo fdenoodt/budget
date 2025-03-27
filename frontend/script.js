@@ -327,7 +327,7 @@ class LineGraphs {
         //
         // drawChart('myChartId', data1, data2, labels);
 
-        this.drawChart('earningsChart', 200,{'name': 'Earnings', 'data': monthlyEarned}, labels);
+        this.drawChart('earningsChart', 200, {'name': 'Earnings', 'data': monthlyEarned}, labels);
         this._printMonthlyEarnedValues(monthlyEarned);
     }
 
@@ -382,7 +382,7 @@ class LineGraphs {
 
         this.drawChart('savingsChartInvestments', 120,
             {'name': 'Investments', 'data': actual_saved_investments},
-            labels, ); // labels e.g. ["Jan", "Feb", "Mar", ...]
+            labels,); // labels e.g. ["Jan", "Feb", "Mar", ...]
 
         this._printMonthlySavedValues(data_more_than_12months);
     }
@@ -671,8 +671,17 @@ const updateBarExpensesLastNDays = (expenses) => {
 const updateMonthlyBudgetStatistics = (income, cap, rent, invest, target_pig_addition) => {
     const div_budget_statistics = document.getElementById('div_budget_statistics');
     div_budget_statistics.innerHTML = `
-        💲${income.toFixed(0)} = 🍞${cap.toFixed(0)} + 🏠${rent.toFixed(0)} + 💸${invest.toFixed(0)} + 🐷${target_pig_addition.toFixed(0)}
+        💲<span data-toggle="tooltip" data-placement="top" title="Netto inkomen">${income.toFixed(0)}</span> = 
+        🍞<span data-toggle="tooltip" data-placement="top" title="Allowance voor maandelijkse kosten">${cap.toFixed(0)}</span> + 
+        🏠<span data-toggle="tooltip" data-placement="top" title="Huur appartement">${rent.toFixed(0)}</span> + 
+        💸<span data-toggle="tooltip" data-placement="top" title="Bedrag te investeren. Berekent op inkomsten nadat target allowance en huur al afgetrokken zijn. 
+        Hiervan gaat ${(invest/(invest+target_pig_addition)) * 100}% naar investeren. De overige ${Math.round((1-(invest/(invest+target_pig_addition)))*100)}% gaat naar de het varkentje.
+        Het investment bedrag is dus berekend op het inkomen en is onafhankelijk van hoeveel allowance je uiteindelijk uitgeeft.">${invest.toFixed(0)}</span> + 
+        🐷<span data-toggle="tooltip" data-placement="top" title="Dit exacte bedrag zal volgende maand naar je varkentje gaan wanneer je deze maand precies 800 eur aan allowance uitgeeft. Besteed je deze maand bv 5 eur meer of minder, dan gaat er €5 meer/minder naar het varkentje."> ${target_pig_addition.toFixed(0)}</span>
     `;
+    $('[data-toggle="tooltip"]').tooltip({trigger: 'hover click touchstart'}).on('mouseleave', function() {
+        $(this).tooltip('hide');
+    });
 }
 
 const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInvestCurrentMonth) => {
