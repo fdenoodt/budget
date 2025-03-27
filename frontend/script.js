@@ -194,19 +194,9 @@ class LineGraphs {
     }
 
     _printMonthlySavedValues(data_more_than_12months) {
-        // const moneyPig = computeMoneyPig(monthlySaved)
+        // *** MONEY PIG ***
         const [moneyPig, _] = computeMoneyPig(data_more_than_12months);
 
-        // // Create a copy of the values and remove the last value
-        // realValues = realValues.slice();
-        // targetValues = realValues.slice();
-        //
-        // // Exclude the last value (current month)
-        // realValues.pop();
-        // targetValues.pop();
-
-
-        // Create a new div element
         const newDiv = document.createElement('div');
         newDiv.style.fontSize = '0.8em';
         newDiv.innerHTML = `
@@ -215,17 +205,24 @@ class LineGraphs {
         (Computed based on entire history. Current month's savings are not yet included.).
         `;
 
-        // newDiv.innerHTML = `
-        //     On average, you saved <span id="real_avg" style="color: #4BC0C0;">${realAvg.toFixed(0)}</span> per month
-        //     (<span id="lbl_difference_with_target">${Math.abs(realAvg - targetAvg).toFixed(0)}</span>
-        //     <span id="lbl_difference_with_target_ABOVE_OR_UNDER">${realAvg > targetAvg ? 'above' : 'under'}</span> target).
-        //     <br>
-        //     Total yearly saved: <span id="real_total" style="color: #4BC0C0;">${this._formatNumber(realTotal)}k</span>.
-        // `;
-
-        // Append the new div after the div with id 'savings_per_month'
-        const savingsPerMonthDiv = document.getElementById('savings_per_month');
+        // Append the new div after the div with id 'savings_per_month_in_money_pig'
+        const savingsPerMonthDiv = document.getElementById('savings_per_month_in_money_pig');
         savingsPerMonthDiv.parentNode.insertBefore(newDiv, savingsPerMonthDiv.nextSibling);
+
+        // *** INVESTMENTS ***
+        const data_last_12months = data_more_than_12months.slice(Math.max(0, data_more_than_12months.length - 12));
+        const totalInvestments = data_last_12months.reduce((sum, month) => sum + month.actual_only_investments, 0);
+        const avgInvestments = totalInvestments / data_last_12months.length;
+
+        const newDivInvestments = document.createElement('div');
+        newDivInvestments.style.fontSize = '0.8em';
+        newDivInvestments.innerHTML = `
+        In the last 12 months, you invested a total of <span id="investments" style="color: #4BC0C0;">€${totalInvestments.toFixed(0)}</span> (avg: €${avgInvestments.toFixed(0)}).
+        <br>
+        (Only the last 12 months are considered. Current month is included).
+        `;
+        const investmentsDiv = document.getElementById('savingsChartInvestments');
+        investmentsDiv.parentNode.insertBefore(newDivInvestments, investmentsDiv.nextSibling);
     }
 
 
@@ -237,7 +234,7 @@ class LineGraphs {
         document.querySelector('#earnings_total').textContent = `${this._formatNumber(total)}k`;
     }
 
-    drawChart(chartId, ...dataArgs) {
+    drawChart(chartId, height, ...dataArgs) {
         const labels = dataArgs.pop(); // The last argument is always the labels array
         const colors = ['rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)',
             'rgb(153, 102, 255)', 'rgb(255, 159, 64)', 'rgb(255, 99, 132)']
@@ -262,7 +259,7 @@ class LineGraphs {
 
         // Get the canvas context
         const ctx = document.getElementById(chartId).getContext('2d');
-        ctx.canvas.height = 200; // Set the desired height
+        ctx.canvas.height = height; // Set the desired height
 
         // Create the chart
         const visibleMax = Math.round(
@@ -330,7 +327,7 @@ class LineGraphs {
         //
         // drawChart('myChartId', data1, data2, labels);
 
-        this.drawChart('earningsChart', {'name': 'Earnings', 'data': monthlyEarned}, labels);
+        this.drawChart('earningsChart', 200,{'name': 'Earnings', 'data': monthlyEarned}, labels);
         this._printMonthlyEarnedValues(monthlyEarned);
     }
 
@@ -369,9 +366,6 @@ class LineGraphs {
         const target_saved_investments = data.map(d => d.target_only_investments); // target saved (investments)
 
 
-        // Draw the chart `savingChart`, `savingsChart` (line chart)
-        // this.drawChart('savingsChart', actual_saved_full, target_saved_full, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
-
         // const [moneyPig, _] = computeMoneyPig(data_more_than_12months);
         const pointValues = [];
         for (let i = 0; i < Math.min(12, nbElements); i++) {
@@ -380,10 +374,15 @@ class LineGraphs {
             pointValues.push(computeMoneyPig(data_more_than_12months.slice(0, start + i + 1))[0]);
         }
 
-        this.drawChart('savingsChart',
+        this.drawChart('savingsChartPig', 200,
             {'name': 'Actual (Pig)', 'data': actual_saved_pig, 'pointValues': pointValues},
             {'name': 'Target (Pig)', 'data': target_saved_pig},
             labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
+
+
+        this.drawChart('savingsChartInvestments', 120,
+            {'name': 'Investments', 'data': actual_saved_investments},
+            labels, ); // labels e.g. ["Jan", "Feb", "Mar", ...]
 
         this._printMonthlySavedValues(data_more_than_12months);
     }

@@ -18,7 +18,7 @@
 
 
     <link rel="icon" type="image/png" href="fav.png"/>
-    <link rel="stylesheet" href="style.css?version=50">
+    <link rel="stylesheet" href="style.css?version=51">
 
 </head>
 
@@ -109,9 +109,16 @@
                 </div>
                 <div class="swiper-slide">
                     Money put in money pig.
-                    <div id="savings_per_month">
+                    <div id="savings_per_month_in_money_pig">
                         <!-- Graph-->
-                        <canvas id="savingsChart"></canvas>
+                        <canvas id="savingsChartPig"></canvas>
+                    </div>
+                </div>
+                <div class="swiper-slide">
+                    Money put in investments.
+                    <div id="savings_per_month_in_investments">
+                        <!-- Graph-->
+                        <canvas id="savingsChartInvestments"></canvas>
                     </div>
                 </div>
                 <div class="swiper-slide">
@@ -129,8 +136,6 @@
         </div>
 
         <div id="div_budget_statistics" style="margin-bottom: 0.5em;">
-<!--            💲<span id="lbl_income">##</span> = 🍞<span id="lbl_cap"></span> + 🏠<span id="lbl_rent">##</span> + 💸<span-->
-<!--                id="lbl_invest">##</span>-->
         </div>
         <div>
             <canvas id="barChart"></canvas>
@@ -194,7 +199,7 @@
         integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
         crossorigin="anonymous"></script>
 
-<script src="script.js?version=50"></script>
+<script src="script.js?version=51"></script>
 
 <script>
     const categories_basics_keys = ['Boodschappen', 'Bakker', 'Gezondheid en verzorging', 'Transport', 'Auto']
