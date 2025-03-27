@@ -207,8 +207,9 @@ class LineGraphs {
         const newDiv = document.createElement('div');
         newDiv.style.fontSize = '0.8em';
         newDiv.innerHTML = `
-        Currently, your money pig contains <span id="money_pig" style="color: #4BC0C0;">€${moneyPig.toFixed(0)}</span>. Enjoy it! (Computed based on entire history. Current month not yet included.).
+        Currently, your money pig contains <span id="money_pig" style="color: #4BC0C0;">€${moneyPig.toFixed(0)}</span>. Enjoy it! 
         <br>
+        (Computed based on entire history. Current month's savings are not yet included.).
         `;
 
         // newDiv.innerHTML = `
@@ -238,6 +239,9 @@ class LineGraphs {
         const colors = ['rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(54, 162, 235)', 'rgb(255, 205, 86)',
             'rgb(153, 102, 255)', 'rgb(255, 159, 64)', 'rgb(255, 99, 132)']
         const datasets = dataArgs.map((dataObj, index) => {
+            if (dataObj.pointValues) {
+                console.assert(dataObj.pointValues.length === dataObj.data.length, "pointValues must be the same length as data");
+            }
             return {
                 label: dataObj.name || `Dataset ${index + 1}`,
                 data: dataObj.data,
@@ -248,7 +252,8 @@ class LineGraphs {
                 pointRadius: 5,
                 pointHoverRadius: 15,
                 borderDash: index === 0 ? [] : [5, 5], // Dashed line for all datasets except the first one
-                hidden: index !== 0 // Hide all datasets except the first one
+                hidden: index !== 0, // Hide all datasets except the first one
+                pointLabels: dataObj.pointValues || [] // Add pointValues as pointLabels
             };
         });
 
@@ -293,6 +298,19 @@ class LineGraphs {
                             }
                         }
                     },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const dataset = context.dataset;
+                                const index = context.dataIndex;
+                                const pointLabel = dataset.pointLabels[index];
+                                return pointLabel ?
+                                    `${context.label}:  €${context.raw.toFixed(0)} (Total 🐖:  €${pointLabel.toFixed(0)})` // e.g. "Jan: 2800 (3000)"
+                                    :
+                                    `${context.label}:  €${context.raw.toFixed(0)}`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -331,8 +349,9 @@ class LineGraphs {
     _monthlySavedChart(data_more_than_12months, labels) {
         // money pig graph
 
+        const nbElements = data_more_than_12months.length;
         // Prepare the data (last 12 months or less)
-        const data = data_more_than_12months.slice(Math.max(0, data_more_than_12months.length - 12)); // slice the last 12 months
+        const data = data_more_than_12months.slice(Math.max(0, nbElements - 12)); // slice the last 12 months
         // data[0..11] are the last 12 months with data[i] = {actual: number, target: number,
         // target_only_pig, target_only_investments,
         // actual_only_pig, actual_only_investments}
@@ -351,9 +370,17 @@ class LineGraphs {
         // this.drawChart('savingsChart', actual_saved_full, target_saved_full, labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
 
         // const [moneyPig, _] = computeMoneyPig(data_more_than_12months);
+        const pointValues = [];
+        console.log(data_more_than_12months.map(d => d.actual_only_pig))
+        for (let i = 0; i < Math.min(12, nbElements); i++) {
+            const start = Math.max(0, nbElements - 12);
+            // take elts 0 ... start + i
+            pointValues.push(computeMoneyPig(data_more_than_12months.slice(0, start + i + 1))[0]);
+        } // TODO: think if indices are correct
+        console.log(pointValues)
+
         this.drawChart('savingsChart',
-            {'name': 'Actual (Pig)', 'data': actual_saved_pig, 'pointValues': []
-            },
+            {'name': 'Actual (Pig)', 'data': actual_saved_pig, 'pointValues': pointValues},
             {'name': 'Target (Pig)', 'data': target_saved_pig},
             labels); // labels e.g. ["Jan", "Feb", "Mar", ...]
 
