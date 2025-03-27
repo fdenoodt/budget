@@ -688,11 +688,14 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
 
     // These two values are just for display purposes
     const maxAllowancePercent = 0.5; // 70%
-    const maxMoneyPigPercent = 0.5; // 30%
+    const maxMoneyPigPercent = 1 - maxAllowancePercent; // 30%
 
 
     const rescaleInnerDonut = (expensesBasics, expensesFun, expensesInfreq, leftOver, // leftOver
-                               allowanceMax, moneyPigTotal, leftOverAllowance, leftOverPig) => {
+                               allowanceMax, moneyPigTotal, leftOverAllowance, leftOverPig,
+                               // last two args are used (based on outer donut vals) for approx method when allowanceUsed > allowanceMax
+                               allowanceUsedDisp, moneyPigUsedDisp) => {
+
         const total = expensesBasics + expensesFun + expensesInfreq;
         const ratioAllowance = total / allowanceMax; // e.g. 850 / 800 = 1.0625 or 750 / 800 = 0.9375
         // the first 100% needs to be weighted by 70% and the rest by 30%.
@@ -707,35 +710,33 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
             const [dispBasics, dispFun, dispInfreq] = [expensesBasics, expensesFun, expensesInfreq]
             return [dispBasics, dispFun, dispInfreq, dispLeftOverAllowance, dispLeftOverPig];
         } else { // more than 100% spent; part needs to be weighted by 70% and the rest by 30%
-            // const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
+            const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
 
-            // const expensesBasicsInAllowance = expensesBasics - overspent * (expensesBasics / total); // e.g. 10 - 50 * (10 / 50) = 0
-            // const expensesBasicsInPig = expensesBasics - expensesBasicsInAllowance; // e.g. 10 - 0 = 10
-            // const dispBasics = ((expensesBasicsInAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
-            //     ((expensesBasicsInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (10 / 0.3) * 0.7 = 0 + 33.33 = 33.33
-            //
-            // const expensesFunInAllowance = expensesFun - overspent * (expensesFun / total); // e.g. 0 - 50 * (0 / 50) = 0
-            // const expensesFunInPig = expensesFun - expensesFunInAllowance; // e.g. 0 - 0 = 0
-            // const dispFun = ((expensesFunInAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
-            //     ((expensesFunInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (0 / 0.3) * 0.7 = 0 + 0 = 0
-            //
-            // const expensesInfreqInAllowance = expensesInfreq - overspent * (expensesInfreq / total); // e.g. 40 - 50 * (40 / 50) = 40 - 40 = 0
-            // const expensesInfreqInPig = expensesInfreq - expensesInfreqInAllowance; // e.g. 40 - 0 = 40
-            // const dispInfreq = ((expensesInfreqInAllowance / maxAllowancePercent) * maxMoneyPigPercent) +
-            //     ((expensesInfreqInPig / maxMoneyPigPercent) * maxAllowancePercent); // e.g. (0 / 0.7) * 0.3 + (40 / 0.3) * 0.7 = 0 + 93.33 = 93.33
+            // const overspent = total - allowanceMax; // e.g. 850 - 800 = 50
+            // no clue how to find a good `leftOver` score analytically, so we do approximate
+
+            const err_target = 0.005; // define leftOver should be 0.5 * total ~= leftOver
+            let leftOver = 0; // start already at 800 as lower values are not possible (assuming a 50% split)
+            // 1-allowanceUsedDisp-moneyPigUsedDisp should equal leftOver / normalizer
+            while (true) {
+                if (Math.abs((1 - allowanceUsedDisp - moneyPigUsedDisp) - (leftOver / (total + leftOver))) < err_target)
+                    break;
+                leftOver += 1;
+            }
+
 
             // I gave up so don't rescale here
-            return [expensesBasics, expensesFun, expensesInfreq, 0, leftOver,]; // leftOverAllowance, leftOverPig
+            return [expensesBasics, expensesFun, expensesInfreq, 0, leftOver]; // leftOverAllowance, leftOverPig
         }
     }
 
-    const rescaleIntoPercentage = (allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
-                                   allowanceMax, moneyPigTotal) => {
+    const rescaleOuterDonut = (allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
+                               allowanceMax, moneyPigTotal) => {
         // for outer donut
 
         // only rescale if allowanceRemaining < 0
-        if (allowanceRemaining === 0)
-            return [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
+        // if (allowanceRemaining === 0)
+        //     return [allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining];
 
         // e.g. allowanceMax = 800, moneyPigTotal = 2000 but if value spent is 700, we want donut to be almost
         // entirely filled. Such that allowanceMax is 70% filled of the donut
@@ -751,7 +752,7 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
     const prices = getExpenesPerMainCategory(groupedExenses, incomeCategory = "Inkomst");
 
     const expensesBasics = prices[0];
-    const expensesFun = prices[1];
+    const expensesFun = prices[1] + 400;
     const expensesInfreq = prices[2]; //+ 400;
     let income = prices[3];
 
@@ -770,26 +771,6 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
 
     updateMonthlyBudgetStatistics(income, allowanceMax, rent, toInvestCurrentMonth, toPutAssideMoneyPig)
 
-    const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent] = rescaleInnerDonut(
-        expensesBasics, expensesFun, expensesInfreq, leftOver,
-        allowanceMax, moneyPigTotal, allowanceRemaining, moneyPigRemaining
-    );
-    const innerData = [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent];
-
-    const innerLabels = [
-        `🍎 €${expensesBasics.toFixed(2)}`,
-        `🎉 €${expensesFun.toFixed(2)}`,
-        `📎 €${expensesInfreq.toFixed(2)}`,
-        `🍞 €${Math.max(allowanceMax.toFixed(2) - allowanceRemaining.toFixed(2))} / ${allowanceMax.toFixed(0)}`,
-        `🐖 €${Math.max(moneyPigTotal.toFixed(0) - moneyPigRemaining.toFixed(0))} / ${moneyPigTotal.toFixed(0)}`
-    ];
-    const innerColors = [
-        'rgba(255, 99, 132, 0.5)',
-        'rgba(0, 122, 251, 0.5)',
-        'rgba(255, 205, 86, 0.5)',
-        'rgba(240, 240, 240, 0.5)',
-        'rgba(240, 240, 240, 0.5)',
-    ];
 
     const expenseTotal = expensesBasics + expensesFun + expensesInfreq;
     const fillPct = Math.min(expenseTotal / allowanceMax, 1);
@@ -798,7 +779,7 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
     const usedOuter = fillPct * outerTotalMax;
 
     const [allowanceUsedDisp, allowanceRemainingDisp, moneyPigUsedDisp, moneyPigRemainingDisp]
-        = rescaleIntoPercentage(
+        = rescaleOuterDonut(
         allowanceUsed, allowanceRemaining, moneyPigUsed, moneyPigRemaining,
         allowanceMax, moneyPigTotal
     );
@@ -818,6 +799,27 @@ const updateDonut = (groupedExenses, moneyPigTotal, toPutAssideMoneyPig, toInves
         'rgba(204, 178, 255, 0.4)',       // remaining allowance
         'rgba(164, 223, 223, 1.0)',       // used money pig
         'rgba(164, 223, 223, 0.4)',      // remaining money pig
+    ];
+
+    const [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent] = rescaleInnerDonut(
+        expensesBasics, expensesFun, expensesInfreq, leftOver,
+        allowanceMax, moneyPigTotal, allowanceRemaining, moneyPigRemaining, allowanceUsedDisp, moneyPigUsedDisp
+    );
+    const innerData = [expensesBasicsPercent, expensesFunPercent, expensesInfreqPercent, leftOverAllowancePercent, leftOverPigPercent];
+
+    const innerLabels = [
+        `🍎 €${expensesBasics.toFixed(2)}`,
+        `🎉 €${expensesFun.toFixed(2)}`,
+        `📎 €${expensesInfreq.toFixed(2)}`,
+        `🍞 €${Math.max(allowanceMax.toFixed(2) - allowanceRemaining.toFixed(2))} / ${allowanceMax.toFixed(0)}`,
+        `🐖 €${Math.max(moneyPigTotal.toFixed(0) - moneyPigRemaining.toFixed(0))} / ${moneyPigTotal.toFixed(0)}`
+    ];
+    const innerColors = [
+        'rgba(255, 99, 132, 0.5)',
+        'rgba(0, 122, 251, 0.5)',
+        'rgba(255, 205, 86, 0.5)',
+        'rgba(240, 240, 240, 0.5)',
+        'rgba(240, 240, 240, 0.5)',
     ];
 
     // -----------------------------
