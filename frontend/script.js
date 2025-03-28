@@ -869,7 +869,7 @@ const plotDonut = (statistics) => {
         beforeDraw: (chart, args, options) => {
             // Use the inner dataset (expenses) to sum up the values (except leftover)
             const data = chart.data.datasets[1].data;
-            const sum = data.slice(0, data.length - 2).reduce((a, b) => a + b, 0).toFixed(2);
+            const sum = data.slice(0, data.length - 2).reduce((a, b) => a + b, 0).toFixed(0);
             const width = chart.width, height = chart.height, ctxChart = chart.ctx;
             const legendWidth = chart.legend && chart.legend.width ? chart.legend.width : 0;
             const text = `€${sum}`;
