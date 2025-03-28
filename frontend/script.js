@@ -615,6 +615,9 @@ const updateBarExpensesLastNDays = (expenses) => {
         };
     });
 
+    console.log('labels', labels)
+    console.log('datasets', datasets)
+
     // Create the chart
     new Chart(ctx, {
         type: 'bar',
@@ -649,10 +652,10 @@ const updateBarExpensesLastNDays = (expenses) => {
                             const date = labels[context.dataIndex];
                             const category = context.dataset.label;
                             const expenses = groupedExpenses[date][category];
-                            const total = expenses.reduce((sum, exp) => sum + exp.price_fabian, 0).toFixed(2);
+                            const total = expenses.reduce((sum, exp) => sum + (getName() === FABIAN ? exp.price_fabian : exp.price_elisa), 0).toFixed(2);
                             const expenseDetails = expenses
-                                .sort((a, b) => b.price_fabian - a.price_fabian)
-                                .map(exp => `${exp.description}: €${exp.price_fabian.toFixed(2)}`);
+                                .sort((a, b) => (getName() === FABIAN ? b.price_fabian : b.price_elisa) - (getName() === FABIAN ? a.price_fabian : a.price_elisa))
+                                .map(exp => `${exp.description}: €${(getName() === FABIAN ? exp.price_fabian : exp.price_elisa).toFixed(2)}`);
                             return [`Total: €${total}`, ...expenseDetails];
                         }
                     },
