@@ -29,9 +29,8 @@ auth = HTTPBasicAuth()
 
 @auth.verify_password
 def verify_password(username, password):
-    return "fabian"
-    # if username == "fabian" and password == "cool":
-    #     return username
+    if username == "fabian" and password == "cool":
+        return username
 
 
 # returns bot debts and all expenses

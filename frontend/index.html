@@ -19,6 +19,7 @@
 
     <link rel="icon" type="image/png" href="fav.png"/>
     <link rel="stylesheet" href="style.css?version=53">
+    <link rel="manifest" href="/manifest.json">
 
 </head>
 
@@ -261,6 +262,19 @@
             loop: false,
         });
     });
+</script>
+
+<script>
+    <!-- PWA -->
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registered with scope:', registration.scope);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    }
 </script>
 
 </body>
