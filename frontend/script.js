@@ -535,8 +535,8 @@ const updateBar = (groupedExenses, indivualExpenses) => {
                                 const myPrice = getName() === FABIAN ? priceFabian : priceElisa;
 
                                 lst_expenses.innerHTML += ExpenseListItem.html(id, date, day, monthNumeric, category, description, myPrice, priceFabian + priceElisa);
-
                             });
+                            ExpenseListItem.attachEventListeners();
 
                             return `€${price.toFixed(2)}`;
                         }
@@ -996,6 +996,8 @@ const updateExpensesAll = (expenses) => {
         lst_expenses.innerHTML += ExpenseListItem.html(id, date, day, monthNumeric, category, description, myPrice, priceFabian + priceElisa);
 
     });
+    ExpenseListItem.attachEventListeners();
+
 }
 
 
@@ -1219,14 +1221,12 @@ class ExpenseListItem {
     static timerId = null;
 
     static html(id, date, day, monthNumeric, category, description, myPrice, priceBoth) {
-        const month = monthNumeric === '01' ? 'Jan' : monthNumeric === '02' ? 'Feb' : monthNumeric === '03' ? 'Mar' : monthNumeric === '04' ? 'Apr' : monthNumeric === '05' ? 'May' : monthNumeric === '06' ? 'Jun' : monthNumeric === '07' ? 'Jul' : monthNumeric === '08' ? 'Aug' : monthNumeric === '09' ? 'Sep' : monthNumeric === '10' ? 'Oct' : monthNumeric === '11' ? 'Nov' : 'Dec';
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = monthNames[parseInt(monthNumeric, 10) - 1]; // Convert numeric month to name
         const colour = category === "Inkomst" ? "green" : "blue";
+
         return `
-        <li class="expenseItem" 
-            onmousedown="ExpenseListItem.startTimer(${id}, '${date}')" ontouchstart="ExpenseListItem.startTimer(${id}, '${date}')"
-            onmouseup="ExpenseListItem.stopTimer()" ontouchend="ExpenseListItem.stopTimer()"
-            onmouseleave="ExpenseListItem.stopTimer()"
-            onclick="ExpenseListItem.deleteExpensePrompt(${id})">
+        <li class="expenseItem" data-id="${id}" data-date="${date}">
           <span class="leftSpan">
             <span class="expenseItemTop expenseItemDay">${month}</span> <br>
             <span class="expenseItemBot">${day}</span>
@@ -1239,14 +1239,38 @@ class ExpenseListItem {
             ${this.getPriceText(myPrice, priceBoth, colour)}
           </span>
         </li>
-        `
+        `;
+    }
+
+    static attachEventListeners() {
+        document.querySelectorAll('.expenseItem').forEach(item => {
+            item.addEventListener('touchstart', (event) => {
+                const id = item.dataset.id;
+                const date = item.dataset.date;
+                ExpenseListItem.startTimer(id, date);
+            }, {passive: true});
+
+            item.addEventListener('mousedown', (event) => {
+                const id = item.dataset.id;
+                const date = item.dataset.date;
+                ExpenseListItem.startTimer(id, date);
+            });
+
+            item.addEventListener('touchend', () => ExpenseListItem.stopTimer(), {passive: true});
+            item.addEventListener('mouseup', () => ExpenseListItem.stopTimer());
+            item.addEventListener('mouseleave', () => ExpenseListItem.stopTimer());
+
+            item.addEventListener('click', () => {
+                const id = item.dataset.id;
+                ExpenseListItem.deleteExpensePrompt(id);
+            });
+        });
     }
 
     static deleteExpensePrompt(id) {
-        // small delay of 0.01 sec to allow css to change color
         setTimeout(() => {
-            if (id === -1) {
-                alert('Monthly expenses cannot be edited')
+            if (id == -1) {
+                alert('Monthly expenses cannot be edited');
                 return;
             }
             confirm(`Delete expense with id ${id}?`) ? this.deleteExpense(id) : null;
@@ -1254,28 +1278,21 @@ class ExpenseListItem {
     }
 
     static editExpensePrompt(id, date) {
-        // date format: dd/mm/yyyy
-        if (id === -1) {
+        if (id == -1) {
             alert('Monthly expenses cannot be edited');
             return;
         }
 
         const newDate = prompt(`Edit expense with id ${id}?`, date);
-        if (!newDate) {
-            return;
-        }
+        if (!newDate) return;
 
-        // Matches dates in the format "dd/mm/yyyy"
         const datePattern = /^\d{2}\/\d{2}\/\d{4}$/;
         if (!datePattern.test(newDate)) {
             alert('Invalid date. Please enter a date in the format "dd/mm/yyyy".');
             return;
         }
 
-        // Check if the date is in the future, that's not allowed
-        const newDateObj = new Date(newDate.split('/').reverse().join('-')); // Convert to format "yyyy-mm-dd"
-
-        // Allow tomorrow, but not later
+        const newDateObj = new Date(newDate.split('/').reverse().join('-'));
         const currentDate = new Date();
         currentDate.setDate(currentDate.getDate() + 1);
 
@@ -1288,8 +1305,7 @@ class ExpenseListItem {
     }
 
     static startTimer(itemId, date) {
-        // used for long press to edit expense
-        ExpenseListItem.timerId = setTimeout(() => this.editExpensePrompt(itemId, date), 2500); // 2 seconds
+        ExpenseListItem.timerId = setTimeout(() => this.editExpensePrompt(itemId, date), 2500);
     }
 
     static stopTimer() {
@@ -1299,33 +1315,30 @@ class ExpenseListItem {
     static getPriceText(myPrice, total, color = "blue") {
         if (myPrice === total) {
             return `<span class="expenseItemTop ${color}" style="font-size: 0.9em;">${myPrice.toFixed(2)}</span> <br>
-        <span class="expenseItemBot"></span>`
+                    <span class="expenseItemBot"></span>`;
         } else if (myPrice === 0) {
             return `&frasl;`;
         }
         return `<span style="font-size: 1.2em; position: relative; top: 10px;">
-      <sup><span class="${color}">${myPrice}</span></sup>&frasl;<sub><span class="expenseTotal">${total.toFixed(2)}</span></sub>
-      </span>`
+                    <sup><span class="${color}">${myPrice}</span></sup>&frasl;<sub><span class="expenseTotal">${total.toFixed(2)}</span></sub>
+                </span>`;
     }
 
     static deleteExpense(id) {
         const fullUrl = `${url}/delete_expense?id=${id}`;
         betterFetch(fullUrl)
             .then(response => response.json())
-            .then(data => {
-                location.reload();
-            })
-            .catch(e => handleError(e))
+            .then(() => location.reload())
+            .catch(e => handleError(e));
     }
 
     static editExpense(id, date) {
-        const fullUrl = `${url}/edit_expense?id=${id}&date=${date}`; // date format: dd/mm/yyyy
+        const fullUrl = `${url}/edit_expense?id=${id}&date=${date}`;
         betterFetch(fullUrl)
             .then(response => response.json())
-            .then(data => {
-                location.reload();
-            })
-            .catch(e => handleError(e))
+            .then(() => location.reload())
+            .catch(e => handleError(e));
     }
 }
+
 
