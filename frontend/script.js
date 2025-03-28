@@ -1,5 +1,5 @@
-const url = "http://127.0.0.1:5000"
-// const url = "https://ofabian.pythonanywhere.com"
+// const url = "http://127.0.0.1:5000"
+const url = "https://ofabian.pythonanywhere.com"
 const key = authenticate()
 
 const inp_price = document.getElementById('inp_price');
@@ -110,8 +110,6 @@ const updateDebtsAndExpensesAll = (maxTrials = 3) => {
     betterFetch(fullUrl)
         .then(response => response.json())
         .then(data => {
-            console.log(data)
-
             const fabian = data.fabian; // eg: +14.00
             const elisa = data.elisa; // eg: +12.00
 
@@ -200,10 +198,9 @@ class LineGraphs {
         const newDiv = document.createElement('div');
         newDiv.style.fontSize = '0.8em';
         newDiv.innerHTML = `
-        Currently, your money pig contains <span id="money_pig" style="color: #4BC0C0;">€${moneyPig.toFixed(0)}</span>. Enjoy it! 
+        Momenteel bevat je spaarvarken <span id="money_pig" style="color: #4BC0C0;">€${moneyPig.toFixed(0)}</span>. Geniet ervan!
         <br>
-        (Computed based on entire history. Current month's savings are not yet included.).
-        `;
+        (Berekend op basis van de volledige geschiedenis. De huidige maand is nog niet inbegrepen.)`;
 
         // Append the new div after the div with id 'savings_per_month_in_money_pig'
         const savingsPerMonthDiv = document.getElementById('savings_per_month_in_money_pig');
@@ -675,11 +672,12 @@ const updateMonthlyBudgetStatistics = (income, cap, rent, invest, target_pig_add
         🍞<span data-toggle="tooltip" data-placement="top" title="Allowance voor maandelijkse kosten">${cap.toFixed(0)}</span> + 
         🏠<span data-toggle="tooltip" data-placement="top" title="Huur appartement">${rent.toFixed(0)}</span> + 
         💸<span data-toggle="tooltip" data-placement="top" title="Bedrag te investeren. Berekent op inkomsten nadat target allowance en huur al afgetrokken zijn. 
-        Hiervan gaat ${(invest/(invest+target_pig_addition)) * 100}% naar investeren. De overige ${Math.round((1-(invest/(invest+target_pig_addition)))*100)}% gaat naar de het varkentje.
+        Hiervan gaat ${(invest / (invest + target_pig_addition)) * 100}% naar investeren. De overige ${Math.round((1 - (invest / (invest + target_pig_addition))) * 100)}% gaat naar de het varkentje.
         Het investment bedrag is dus berekend op het inkomen en is onafhankelijk van hoeveel allowance je uiteindelijk uitgeeft.">${invest.toFixed(0)}</span> + 
         🐷<span data-toggle="tooltip" data-placement="top" title="Dit exacte bedrag zal volgende maand naar je varkentje gaan wanneer je deze maand precies 800 eur aan allowance uitgeeft. Besteed je deze maand bv 5 eur meer of minder, dan gaat er €5 meer/minder naar het varkentje."> ${target_pig_addition.toFixed(0)}</span>
     `;
-    $('[data-toggle="tooltip"]').tooltip({trigger: 'hover click touchstart'}).on('mouseleave', function() {
+
+    $('[data-toggle="tooltip"]').tooltip({trigger: 'hover click touchstart'}).on('mouseleave', function () {
         $(this).tooltip('hide');
     });
 }
