@@ -238,7 +238,7 @@ def _get_all_savings_for_each_month(who: str, up_to: int) -> List[SavingsTuple]:
     if who.lower() == 'fabian':
         INVESTMENT_PERCENT = .85
     else: # elisa
-        INVESTMENT_PERCENT = .82
+        INVESTMENT_PERCENT = .78
     MONEY_PIG_PERCENT = 1 - INVESTMENT_PERCENT  # 20% of the money saved goes to the pig
 
     # e.g. income = 2700 - 455 - 800 = 1445.
